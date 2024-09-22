@@ -4,20 +4,24 @@ using Microsoft.VisualBasic;
 
 namespace BankSystem.Dom.Models;
 
-public class Employee: Person
+public class Employee : Person
 {
     public string Position { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; } 
-    public string Contract { get; set; } 
-    public Currency Currency { get; set; } 
-    public Employee(string name, string surname, string email, string phoneNumber, int age, string address, string position, Currency currency,  DateTime endDate, DateTime startDate = default)
-        : base(name, surname, email, phoneNumber, age, address)
+    public DateTime StartDate { get; set; } = DateTime.Now;
+    public DateTime EndDate { get; set; }
+    public decimal Salary { get; set; }
+    public Currency Currency { get; set; }
+
+    public string Contract
     {
-        Position = position;
-        StartDate =  startDate == default ? DateTime.Now : startDate;;
-        EndDate = endDate;
-        Contract = $"Contract for {name} {surname} from {StartDate.ToString("d")} to {EndDate.ToString("d")} with salary: {currency.Code} {currency.TotalAmount} (PMRRUB: {currency.ExchangeRate})";
-        Currency = currency;
+        get
+        {
+            return
+                $"Contract for {Name} {Surname} from {StartDate.ToString("d")} to {EndDate.ToString("d")} with salary: {Salary} {Currency.Code}";
+        }
+        set
+        {
+            
+        }
     }
 }
