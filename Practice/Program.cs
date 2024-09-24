@@ -1,4 +1,5 @@
-﻿using BankSystem.App.Services;
+﻿using System.Diagnostics;
+using BankSystem.App.Services;
 using BankSystem.Dom.Models;
 
 namespace Practice;
@@ -64,6 +65,42 @@ class Program
             $"Client: {clientIvan.Name} {clientIvan.Surname} {clientIvan.Email} {clientIvan.PhoneNumber}");
         var employeeAnonymous = BankService.Hiring(clientIvan);
         Console.WriteLine($"Employee: {employeeAnonymous.Contract}");
+        var clientsList = TestDataGenerator.GenerateClients();
+        var clientList = clientsList[500];
+        var clientsDictionary = TestDataGenerator.GenerateClientsDictionary(clientsList);
+        var clientDictionary = clientsDictionary.Keys.ElementAt(500);
+        var employeesList = TestDataGenerator.GenerateEmployees();
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+        var findClientList = clientsList.FirstOrDefault(p => p.PhoneNumber == clientList.PhoneNumber);
+        stopwatch.Stop();
+        Console.WriteLine($"Time to find client in List: {stopwatch.Elapsed}");
+        stopwatch.Reset();
+        stopwatch.Start();
+        var findClientDictionary = clientsDictionary[clientDictionary];
+        stopwatch.Stop();
+        Console.WriteLine($"Time to find client in Dictionary: {stopwatch.Elapsed}");
+        stopwatch.Reset();
+        var clientsUnder18 = clientsList.FindAll(p => p.Age < 18);
+        Console.WriteLine($"Client under 18 years of age:");
+        foreach (var client in clientsUnder18)
+        {
+            Console.Write($"{client.Name} {client.Age}; ");
+        }
+
+        Console.WriteLine();
+        var employeeWithMinSalary = employeesList.FirstOrDefault(e => e.Salary == employeesList.Min(e => e.Salary));
+        Console.WriteLine(
+            $"Employee with min salary: {employeeWithMinSalary?.Name} - {employeeWithMinSalary?.Salary}");
+        stopwatch.Start();
+        var lastClient = clientsDictionary.LastOrDefault(p => p.Key == clientDictionary);
+        stopwatch.Stop();
+        Console.WriteLine($"Time to find with LastOfDefault: {stopwatch.Elapsed}");
+        stopwatch.Reset();
+        stopwatch.Start();
+        var clientWithKey = clientsDictionary[clientDictionary];   
+        stopwatch.Stop();
+        Console.WriteLine($"Time to find with key: {stopwatch.Elapsed}");
     }
 
     private static void UpdateContract(Employee employee)
