@@ -65,22 +65,46 @@ class Program
             $"Client: {clientIvan.Name} {clientIvan.Surname} {clientIvan.Email} {clientIvan.PhoneNumber}");
         var employeeAnonymous = BankService.Hiring(clientIvan);
         Console.WriteLine($"Employee: {employeeAnonymous.Contract}");
+
         var clientsList = TestDataGenerator.GenerateClients();
-        var clientList = clientsList[500];
+        var singleClient = clientsList[500];
         var clientsDictionary = TestDataGenerator.GenerateClientsDictionary(clientsList);
-        var clientDictionary = clientsDictionary.Keys.ElementAt(500);
+        var clientKey = clientsDictionary.Keys.ElementAt(500);
         var employeesList = TestDataGenerator.GenerateEmployees();
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
-        var findClientList = clientsList.FirstOrDefault(p => p.PhoneNumber == clientList.PhoneNumber);
-        stopwatch.Stop();
-        Console.WriteLine($"Time to find client in List: {stopwatch.Elapsed}");
-        stopwatch.Reset();
-        stopwatch.Start();
-        var findClientDictionary = clientsDictionary[clientDictionary];
-        stopwatch.Stop();
-        Console.WriteLine($"Time to find client in Dictionary: {stopwatch.Elapsed}");
-        stopwatch.Reset();
+
+        var iteration = 10;
+        var warmupIterations = 3;
+        var listSearchTime = new List<TimeSpan>();
+        var dictionarySearchTimes = new List<TimeSpan>();
+        var stopwatch = new Stopwatch();
+
+        for (var i = 0; i < iteration; i++)
+        {
+            stopwatch.Start();
+            var foundClientInList = clientsList.FirstOrDefault(p => p.PhoneNumber == singleClient.PhoneNumber);
+            stopwatch.Stop();
+            if (i >= warmupIterations)
+            {
+                listSearchTime.Add(stopwatch.Elapsed);
+            }
+
+            stopwatch.Reset();
+            stopwatch.Start();
+            var foundClientInDictionary = clientsDictionary[clientKey];
+            stopwatch.Stop();
+            if (i >= warmupIterations)
+            {
+                dictionarySearchTimes.Add(stopwatch.Elapsed);
+            }
+
+            stopwatch.Reset();
+        }
+
+        var averageListTime = new TimeSpan((long)listSearchTime.Average(time => time.Ticks));
+        Console.WriteLine($"Average time to find client in List: {averageListTime}");
+        var averageDictionaryTime = new TimeSpan((long)dictionarySearchTimes.Average(time => time.Ticks));
+        Console.WriteLine($"Average time to find client in Dictionary: {averageDictionaryTime}");
+
         var clientsUnder18 = clientsList.FindAll(p => p.Age < 18);
         Console.WriteLine($"Client under 18 years of age:");
         foreach (var client in clientsUnder18)
@@ -92,15 +116,35 @@ class Program
         var employeeWithMinSalary = employeesList.FirstOrDefault(e => e.Salary == employeesList.Min(e => e.Salary));
         Console.WriteLine(
             $"Employee with min salary: {employeeWithMinSalary?.Name} - {employeeWithMinSalary?.Salary}");
-        stopwatch.Start();
-        var lastClient = clientsDictionary.LastOrDefault(p => p.Key == clientDictionary);
-        stopwatch.Stop();
-        Console.WriteLine($"Time to find with LastOfDefault: {stopwatch.Elapsed}");
-        stopwatch.Reset();
-        stopwatch.Start();
-        var clientWithKey = clientsDictionary[clientDictionary];   
-        stopwatch.Stop();
-        Console.WriteLine($"Time to find with key: {stopwatch.Elapsed}");
+
+        var lastOrDefaultTimes = new List<TimeSpan>();
+        var keyLookupTimes = new List<TimeSpan>();
+        for (var i = 0; i < iteration; i++)
+        {
+            stopwatch.Start();
+            var lastFoundClientByKey = clientsDictionary.LastOrDefault(p => p.Key == clientKey);
+            stopwatch.Stop();
+            if (i >= warmupIterations)
+            {
+                lastOrDefaultTimes.Add(stopwatch.Elapsed);
+            }
+
+            stopwatch.Reset();
+            stopwatch.Start();
+            var foundClientByKey = clientsDictionary[clientKey];
+            stopwatch.Stop();
+            if (i >= warmupIterations)
+            {
+                keyLookupTimes.Add(stopwatch.Elapsed);
+            }
+
+            stopwatch.Reset();
+        }
+
+        var averageLastOrDefaultTime = new TimeSpan((long)lastOrDefaultTimes.Average(time => time.Ticks));
+        Console.WriteLine($"Average time to find with LastOrDefault: {averageLastOrDefaultTime}");
+        var averageKeyTime = new TimeSpan((long)keyLookupTimes.Average(time => time.Ticks));
+        Console.WriteLine($"Average time to find with key: {averageKeyTime}");
     }
 
     private static void UpdateContract(Employee employee)
