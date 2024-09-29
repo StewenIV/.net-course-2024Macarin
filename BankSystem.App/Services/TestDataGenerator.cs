@@ -17,12 +17,14 @@ public class TestDataGenerator
             .RuleFor(p => p.Age, f => f.Random.Number(10, 65))
             .RuleFor(p => p.Address, f => f.Address.FullAddress())
             .RuleFor(p => p.OrderNumber, f => ++orderNumber)
-            .RuleFor(p => p.OrderAmount, f =>  f.Random.Int(5,10)*100m);
+            .RuleFor(p => p.OrderAmount, f => f.Random.Int(5, 10) * 100m);
         return personFaker.Generate(1000);
     }
 
     public static Dictionary<string, Client> GenerateClientsDictionary(List<Client> clients)
     {
+        if (clients == null)
+            throw new ArgumentNullException(nameof(clients));
         return clients.ToDictionary(c => c.PhoneNumber, c => c);
     }
 
@@ -47,10 +49,39 @@ public class TestDataGenerator
                 Name = f.PickRandom(nameCurrency),
                 Code = CurrencyCode.Usd
             })
-            .RuleFor(p => p.Salary, f => f.Random.Int(5,20)*100m)
+            .RuleFor(p => p.Salary, f => f.Random.Int(5, 20) * 100m)
             .RuleFor(p => p.StartDate, f => f.Date.Past(1))
             .RuleFor(p => p.EndDate, f => f.Date.Future())
             .RuleFor(p => p.Contract, f => f.Lorem.Sentence());
         return personFaker.Generate(1000);
+    }
+
+    public static Dictionary<Client, List<Account>> GenerateDictionary(List<Client> clients)
+    {
+        if (clients == null)
+            throw new ArgumentNullException(nameof(clients));
+        var random = new Random();
+        var availableCurrencies = new List<Currency>
+        {
+            new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
+            new Currency { Name = "Euro", Code = CurrencyCode.Eur },
+            new Currency { Name = "Rub", Code = CurrencyCode.Rub }
+        };
+        return clients.ToDictionary(client => client, c =>
+        {
+            var accountCount = random.Next(1, 3);
+            var accounts = new List<Account>();
+            for (var i = 0; i < accountCount; i++)
+            {
+                var randomCurrency = availableCurrencies[random.Next(availableCurrencies.Count)];
+                accounts.Add(new Account
+                {
+                    Currency = randomCurrency,
+                    Amount = random.Next(100, 1000) * 100m
+                });
+            }
+
+            return accounts;
+        });
     }
 }

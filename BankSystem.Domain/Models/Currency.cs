@@ -6,6 +6,19 @@ public struct Currency
 {
     public string Name { get; set; }
     public CurrencyCode Code { get; set; }
+    public override bool Equals(object obj)
+    {
+        if (obj is Currency otherCurrency)
+        {
+            return Name == otherCurrency.Name && Code == otherCurrency.Code;
+        }
+
+        return false;
+    }
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Name, Code);
+    }
 }
 
 public enum CurrencyCode

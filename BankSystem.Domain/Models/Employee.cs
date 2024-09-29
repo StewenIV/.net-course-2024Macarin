@@ -19,9 +19,30 @@ public class Employee : Person
             return
                 $"Contract for {Name} {Surname} from {StartDate.ToString("d")} to {EndDate.ToString("d")} with salary: {Salary} {Currency.Code}";
         }
-        set
+        set { }
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (obj is Employee otherEmployee)
         {
-            
+            return Name == otherEmployee.Name && Surname == otherEmployee.Surname &&
+                   PhoneNumber == otherEmployee.PhoneNumber &&
+                   Email == otherEmployee.Email && Age == otherEmployee.Age && Address == otherEmployee.Address &&
+                   Position == otherEmployee.Position && StartDate == otherEmployee.StartDate &&
+                   EndDate == otherEmployee.EndDate &&
+                   Salary == otherEmployee.Salary && Currency.Equals(otherEmployee.Currency);
         }
+
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(
+            HashCode.Combine(Name, Surname, PhoneNumber, Email),
+            HashCode.Combine(Age, Address, Position, Salary),
+            Currency.GetHashCode(), StartDate, EndDate
+        );
     }
 }
