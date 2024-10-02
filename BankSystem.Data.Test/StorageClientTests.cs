@@ -62,26 +62,6 @@ public class StorageClientTests
     }
 
     [Fact]
-    public void AddClient_ShouldThrowInvalidOperationException_WhenClientPropertiesAreNotFullySet()
-    {
-        // Arrange
-        var clients = new List<Client>();
-        var storage = new ClientStorage(clients);
-        var client = new Client
-        {
-            Name = "Ivan",
-            Surname = "Ivanov",
-            Email = "sadas@mail.ru"
-        };
-
-        //Act
-        var exception = Record.Exception(() => storage.AddClient(client));
-
-        //Assert
-        Assert.True(exception is InvalidOperationException);
-    }
-
-    [Fact]
     public void GetYoungestClient_ShouldReturnYoungestClient_WhenClientsExist()
     {
         // Arrange
@@ -154,7 +134,7 @@ public class StorageClientTests
 
         // Act
         var exception = Record.Exception(() => storage.GetOldestClient());
-        
+
         // Assert
         Assert.True(exception is InvalidOperationException);
     }
@@ -204,7 +184,7 @@ public class StorageClientTests
 
         // Act
         var exception = Record.Exception(() => storage.GetAverageAge());
-        
+
         // Assert
         Assert.True(exception is InvalidOperationException);
     }
@@ -234,7 +214,7 @@ public class StorageClientTests
 
         // Act
         var exception = Record.Exception(() => storage.RemoveEmployee(employeeIvan));
-        
+
         // Assert
         Assert.True(exception is ArgumentNullException);
     }
@@ -256,10 +236,10 @@ public class StorageClientTests
         };
         var clients = TestDataGenerator.GenerateClients();
         var storage = new ClientStorage(clients);
-        
+
         // Act
         var exception = Record.Exception(() => storage.RemoveClient(clientIvan));
-        
+
         //Assert
         Assert.True(exception is ArgumentException);
     }

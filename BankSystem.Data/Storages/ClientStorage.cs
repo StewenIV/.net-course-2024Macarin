@@ -1,5 +1,4 @@
 using System.Reflection;
-using BankSystem.Data.Primitivies;
 using BankSystem.Dom.Models;
 
 namespace BankSystem.Data.Storages;
@@ -21,8 +20,6 @@ public class ClientStorage
             throw new ArgumentNullException(nameof(client));
         if (_clients.Exists(c => c.Equals(client)))
             throw new ArgumentException("Client already exists");
-        if (!client.AreAllPropertiesSet())
-            throw new InvalidOperationException("Client properties are not fully set");
         _clients.Add(client);
     }
 

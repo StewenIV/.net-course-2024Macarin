@@ -65,26 +65,6 @@ public class StorageEmployeeTests
     }
 
     [Fact]
-    public void AddEmployee_ShouldTrowInvalidOperationException_WhenEmployeePropertiesAreNotFullySet()
-    {
-        //Arrange
-        var employees = new List<Employee>();
-        var storage = new EmployeeStorage(employees);
-        var employee = new Employee
-        {
-            Name = "Pasha",
-            Surname = "Ivanov",
-            Email = "amsasd@mail.ru"
-        };
-
-        //Act
-        var exception = Record.Exception(() => storage.AddEmployee(employee));
-
-        //Assert
-        Assert.True(exception is InvalidOperationException);
-    }
-
-    [Fact]
     public void GetYoungestEmployee_ShouldReturnYoungestEmployee_WhenEmployeesExist()
     {
         //Arrange

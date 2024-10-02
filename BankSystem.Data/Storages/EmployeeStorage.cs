@@ -1,4 +1,3 @@
-using BankSystem.Data.Primitivies;
 using BankSystem.Dom.Models;
 
 namespace BankSystem.Data.Storages;
@@ -20,8 +19,6 @@ public class EmployeeStorage
             throw new ArgumentNullException(nameof(employee));
         if (_employees.Exists(c => c.Equals(employee)))
             throw new ArgumentException("Employee already exists");
-        if (!employee.AreAllPropertiesSet())
-            throw new InvalidOperationException("Employee properties are not fully set");
         _employees.Add(employee);
     }
 
