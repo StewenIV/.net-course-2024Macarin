@@ -5,50 +5,49 @@ namespace BankSystem.Data.Storages;
 
 public class ClientStorage
 {
-    private readonly List<Client> _clients;
+    private readonly Dictionary<Client, List<Account>> _clients;
 
-    public ClientStorage(List<Client> clients)
+    public ClientStorage(Dictionary<Client, List<Account>> clients)
     {
         _clients = clients;
     }
 
-    public List<Client> Clients => _clients;
+    public Dictionary<Client, List<Account>> Clients => _clients;
 
-    public void AddClient(Client client)
+    public void AddClient(Client client, List<Account> accounts)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
-        if (_clients.Exists(c => c.Equals(client)))
+        if (!_clients.TryAdd(client, accounts))
             throw new ArgumentException("Client already exists");
-        _clients.Add(client);
     }
 
     public Client GetYoungestClient()
     {
         if (!_clients.Any())
             throw new InvalidOperationException("No clients in storage");
-        return _clients.Aggregate((youngest, next) => next.Age < youngest.Age ? next : youngest);
+        return _clients.Aggregate((youngest, next) => next.Key.Age < youngest.Key.Age ? next : youngest).Key;
     }
 
     public Client GetOldestClient()
     {
         if (!_clients.Any())
             throw new InvalidOperationException("No clients in storage");
-        return _clients.Aggregate((oldest, next) => oldest.Age < next.Age ? next : oldest);
+        return _clients.Aggregate((oldest, next) => next.Key.Age > oldest.Key.Age ? next : oldest).Key;
     }
 
     public int GetAverageAge()
     {
         if (!_clients.Any())
             throw new InvalidOperationException("No clients in storage");
-        return (int)_clients.Average(c => c.Age);
+        return (int)_clients.Average(x => x.Key.Age);
     }
 
     public void RemoveClient(Client client)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
-        if (0 > _clients.IndexOf(client))
+        if (!_clients.ContainsKey(client))
             throw new ArgumentException("Client not found");
         _clients.Remove(client);
     }

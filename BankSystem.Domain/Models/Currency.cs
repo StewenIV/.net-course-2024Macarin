@@ -1,10 +1,13 @@
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
 namespace BankSystem.Dom.Models;
 
 public struct Currency
 {
+    [Required(ErrorMessage = "Currency name is required")]
     public string Name { get; set; }
+    [Required(ErrorMessage = "Currency code is required")]
     public CurrencyCode Code { get; set; }
     public override bool Equals(object obj)
     {

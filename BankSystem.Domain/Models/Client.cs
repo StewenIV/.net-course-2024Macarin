@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace BankSystem.Dom.Models;
 
 public class Client : Person
 {
+    [Required(ErrorMessage = "Order number is required")]
     public int OrderNumber { get; set; }
     public decimal OrderAmount { get; set; }
 

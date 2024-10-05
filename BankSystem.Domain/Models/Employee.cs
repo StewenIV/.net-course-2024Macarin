@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using Microsoft.VisualBasic;
@@ -6,9 +7,13 @@ namespace BankSystem.Dom.Models;
 
 public class Employee : Person
 {
+    [MaxLength(50, ErrorMessage = "Position must be less than 50 characters")]
     public string Position { get; set; }
+    [DataType(DataType.Date)]
     public DateTime StartDate { get; set; } = DateTime.Now;
+    [DataType(DataType.Date)]
     public DateTime EndDate { get; set; }
+    [Required(ErrorMessage = "Salary is required")]
     public decimal Salary { get; set; }
     public Currency Currency { get; set; }
 
