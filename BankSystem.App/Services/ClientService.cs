@@ -65,7 +65,7 @@ public class ClientService
             }
         }
 
-        _clientStorage.Clients[client].AddRange(accounts);
+        _clientStorage.AddAdditionalAccount(client, accounts);
     }
 
     public void UpdateAccount(Client client, Account updateAccount)

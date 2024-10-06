@@ -21,6 +21,17 @@ public class ClientStorage
         if (!_clients.TryAdd(client, accounts))
             throw new ArgumentException("Client already exists");
     }
+    
+    public void AddAdditionalAccount(Client client, List<Account> accounts)
+    {
+        if (client is null)
+            throw new ArgumentNullException(nameof(client));
+        if (accounts is null)
+            throw new ArgumentNullException(nameof(accounts));
+        if (!_clients.ContainsKey(client))
+            throw new ArgumentException("Client not found");
+        _clients[client].AddRange(accounts);
+    }
 
     public Client GetYoungestClient()
     {
