@@ -17,7 +17,8 @@ public class TestDataGenerator
             .RuleFor(p => p.Age, f => f.Random.Number(10, 65))
             .RuleFor(p => p.Address, f => f.Address.FullAddress())
             .RuleFor(p => p.OrderNumber, f => ++orderNumber)
-            .RuleFor(p => p.OrderAmount, f => f.Random.Int(5, 10) * 100m);
+            .RuleFor(p => p.OrderAmount, f => f.Random.Int(5, 10) * 100m)
+            .RuleFor(p => p.PassportDetails, f => f.Lorem.Sentence());
         return personFaker.Generate(1000);
     }
 
@@ -52,7 +53,8 @@ public class TestDataGenerator
             .RuleFor(p => p.Salary, f => f.Random.Int(5, 20) * 100m)
             .RuleFor(p => p.StartDate, f => f.Date.Past(1))
             .RuleFor(p => p.EndDate, f => f.Date.Future())
-            .RuleFor(p => p.Contract, f => f.Lorem.Sentence());
+            .RuleFor(p => p.Contract, f => f.Lorem.Sentence())
+            .RuleFor(p => p.PassportDetails, f => f.Lorem.Sentence());
         return personFaker.Generate(1000);
     }
 
