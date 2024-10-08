@@ -1,17 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using BankSystem.Appl.Exceptions;
-using BankSystem.Data.Storages;
+using BankSystem.Appl.Interfaces;
 using BankSystem.Dom.Models;
 
 namespace BankSystem.App.Services;
 
 public class ClientService
 {
-    private readonly ClientStorage _clientStorage;
+    private readonly IClientStorage _iStorage;
 
-    public ClientService(ClientStorage clientStorage)
+    public ClientService(IClientStorage iStorage)
     {
-        _clientStorage = clientStorage;
+        _iStorage = iStorage;
     }
 
     public void AddClient(Client client)
@@ -29,20 +29,43 @@ public class ClientService
             throw new InvalidPersonAgeException("Client is under 18");
         if (client.PassportDetails is null)
             throw new PassportDetailsNullException(nameof(client.PassportDetails));
+        _iStorage.Add(client);
+    }
 
-        var dollarAccount = new List<Account>()
-        {
-            new()
-            {
-                Currency = new Currency
-                {
-                    Name = "Dollar",
-                    Code = CurrencyCode.Usd
-                },
-                Amount = 0m
-            }
-        };
-        _clientStorage.AddClient(client, dollarAccount);
+    public Dictionary<Client, List<Account>> GetClients(string name = null, string surname = null,
+        string phoneNumber = null,
+        string passportDetails = null, DateTime start = default, DateTime end = default)
+    {
+        if (end == default)
+            end = DateTime.Now;
+        var clients = _iStorage.Get(c => (name == null || c.Name == name) &&
+                                         (surname == null || c.Surname == surname) &&
+                                         (phoneNumber == null || c.PhoneNumber == phoneNumber) &&
+                                         (passportDetails == null ||
+                                          c.PassportDetails == passportDetails) &&
+                                         ((start == default || c.BirthDate >= start) &&
+                                          (end != default || c.BirthDate <= end)));
+        return clients;
+    }
+
+    public void UpdateClient(Client oldClient, Client newClient)
+    {
+        if (oldClient is null)
+            throw new ArgumentNullException(nameof(oldClient));
+        if (newClient is null)
+            throw new ArgumentNullException(nameof(newClient));
+        if (!_iStorage.Get(c => Equals(c, oldClient)).Any())
+            throw new ArgumentException("Client not found");
+        _iStorage.Update(oldClient, newClient);
+    }
+
+    public void RemoveClient(Client client)
+    {
+        if (client is null)
+            throw new ArgumentNullException(nameof(client));
+        if (!_iStorage.Get(c => Equals(c, client)).Any())
+            throw new ArgumentException("Client not found");
+        _iStorage.Delete(client);
     }
 
     public void AddAdditionalAccount(Client client, List<Account> accounts)
@@ -51,7 +74,7 @@ public class ClientService
             throw new ArgumentNullException(nameof(client));
         if (accounts is null)
             throw new ArgumentNullException(nameof(accounts));
-        if (!_clientStorage.Clients.ContainsKey(client))
+        if (!_iStorage.Get(c => Equals(c, client)).Any())
             throw new ArgumentException("Client not found");
         foreach (var account in accounts)
         {
@@ -65,7 +88,7 @@ public class ClientService
             }
         }
 
-        _clientStorage.AddAdditionalAccount(client, accounts);
+        _iStorage.AddAccount(client, accounts);
     }
 
     public void UpdateAccount(Client client, Account updateAccount)
@@ -74,9 +97,9 @@ public class ClientService
             throw new ArgumentNullException(nameof(client));
         if (updateAccount is null)
             throw new ArgumentNullException(nameof(updateAccount));
-        if (!_clientStorage.Clients.ContainsKey(client))
+        if (!_iStorage.Get(c => Equals(c, client)).Any())
             throw new ArgumentException("Client not found");
-        var clientAccounts = _clientStorage.Clients[client];
+        var clientAccounts = _iStorage.Get(c => Equals(c, client)).First().Value;
         var existingAccount = clientAccounts.Find(a => a.Currency.Code == updateAccount.Currency.Code);
         if (existingAccount is null)
             throw new ArgumentException("Account not found");
@@ -85,20 +108,14 @@ public class ClientService
         existingAccount.Amount = updateAccount.Amount;
     }
 
-    public Dictionary<Client, List<Account>> GetClients(string name = null, string surname = null,
-        string phoneNumber = null,
-        string passportDetails = null, DateTime start = default, DateTime end = default)
+    public void RemoveAccount(Client client, Account account)
     {
-        if (end == default)
-            end = DateTime.Now;
-        var clients = _clientStorage.Clients.Where(c => (name == null || c.Key.Name == name) &&
-                                                        (surname == null || c.Key.Surname == surname) &&
-                                                        (phoneNumber == null || c.Key.PhoneNumber == phoneNumber) &&
-                                                        (passportDetails == null ||
-                                                         c.Key.PassportDetails == passportDetails) &&
-                                                        ((start == default || c.Key.BirthDate >= start) &&
-                                                         (end != default || c.Key.BirthDate <= end)))
-            .ToDictionary(c => c.Key, c => c.Value);
-        return clients;
+        if (client is null)
+            throw new ArgumentNullException(nameof(client));
+        if (account is null)
+            throw new ArgumentNullException(nameof(account));
+        if (!_iStorage.Get(c => Equals(c, client)).Any())
+            throw new ArgumentException("Client not found");
+        _iStorage.RemoveAccount(client, account);
     }
 }

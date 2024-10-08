@@ -4,6 +4,7 @@ namespace BankSystem.App.Services;
 
 public class BankService
 {
+    private List<Person> _blackList = new();
     public static int GetSalary(decimal bankProfit, decimal bankExpenses, Employee[] owners)
     {
         if (owners == null || owners.Length == 0)
@@ -45,5 +46,42 @@ public class BankService
             },
             EndDate = DateTime.Now.AddYears(1)
         };
+    }
+
+    public void AddBonus<T>(T person) where T : Person
+    {
+        if (person == null)
+        {
+            throw new ArgumentNullException(nameof(person));
+        }
+
+        decimal bonus;
+        if (person.Bonus == 0m)
+        {
+            bonus = 100m;
+            person.Bonus += bonus;
+        }
+        else
+        {
+            person.Bonus *= 2m;
+        }
+    }
+    
+    public void AddToBlackList<T>(T person) where T : Person
+    {
+        if (person == null)
+        {
+            throw new ArgumentNullException(nameof(person));
+        }
+        _blackList.Add(person);
+    }
+    
+    public bool IsPersonInBlackList<T>(T person) where T : Person
+    {
+        if (person == null)
+        {
+            throw new ArgumentNullException(nameof(person));
+        }
+        return _blackList.Contains(person);
     }
 }

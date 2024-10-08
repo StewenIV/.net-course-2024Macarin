@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using BankSystem.App.Services;
 using BankSystem.Appl.Exceptions;
+using BankSystem.Appl.Interfaces;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
 
