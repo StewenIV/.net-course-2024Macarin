@@ -12,19 +12,6 @@ public class StorageClientTests
         // Arrange
         var clients = new Dictionary<Client, List<Account>>();
         var storage = new ClientStorage(clients);
-        var accounts = new List<Account>()
-        {
-            new Account()
-            {
-                Amount = 1000m,
-                Currency = new Currency() { Code = CurrencyCode.Usd, Name = "Dollar" }
-            },
-            new Account()
-            {
-                Amount = 1000m,
-                Currency = new Currency() { Code = CurrencyCode.Eur, Name = "Euro" }
-            }
-        };
         var clientIvan = new Client
         {
             Name = "Ivan",
@@ -38,7 +25,7 @@ public class StorageClientTests
         };
 
         // Act
-        storage.AddClient(clientIvan, accounts);
+        storage.Add(clientIvan);
 
         // Assert
         Assert.Contains(clientIvan, clients);
@@ -54,7 +41,7 @@ public class StorageClientTests
         Client clientIvan = null;
 
         //Act
-        var exception = Record.Exception(() => storage.AddClient(clientIvan, new List<Account>()));
+        var exception = Record.Exception(() => storage.Add(clientIvan));
 
         //Assert
         Assert.True(exception is ArgumentNullException);
@@ -70,14 +57,30 @@ public class StorageClientTests
         var client = clients.First();
 
         // Act
-        var exception = Record.Exception(() => storage.AddClient(client, new List<Account>()));
+        var exception = Record.Exception(() => storage.Add(client));
 
         // Assert
         Assert.True(exception is ArgumentException);
     }
 
     [Fact]
-    public void GetYoungestClient_ShouldReturnYoungestClient_WhenClientsExist()
+    public void GetClients_ShouldReturnClients_WhenClientsIsValid()
+    {
+        // Arrange
+        var clients = TestDataGenerator.GenerateClients();
+        var persons = TestDataGenerator.GenerateDictionary(clients);
+        var storage = new ClientStorage(persons);
+        var client = clients.First();
+
+        // Act
+        var result = storage.Get(c => c.Name == client.Name);
+
+        // Assert
+        Assert.NotEmpty(result);
+    }
+    
+    [Fact]
+    public void GetClients_ShouldReturnClients_WhenClientsIsValidAndFilterIsNull()
     {
         // Arrange
         var clients = TestDataGenerator.GenerateClients();
@@ -85,30 +88,20 @@ public class StorageClientTests
         var storage = new ClientStorage(persons);
 
         // Act
-        var result = storage.GetYoungestClient();
+        var exception = Record.Exception(()=>storage.Get(null));
 
         // Assert
-        Assert.Equal(clients.Min(c => c.Age), result.Age);
+        Assert.True(exception is ArgumentNullException);
     }
 
     [Fact]
-    public void GetYoungestClient_ShouldThrowInvalidOperationException_WhenNoClientsExist()
-    {
-        //Arrange
-        var clients = new Dictionary<Client, List<Account>>();
-        var storage = new ClientStorage(clients);
-
-        //Act 
-        var exception = Record.Exception(() => storage.GetYoungestClient());
-
-        //Assert
-        Assert.True(exception is InvalidOperationException);
-    }
-
-    [Fact]
-    public void GetOldestClient_ShouldReturnOldestClient_WhenClientsExist()
+    public void UpdateClient_ShouldUpdateClient_WhenClientIsValid()
     {
         // Arrange
+        var clients = TestDataGenerator.GenerateClients();
+        var persons = TestDataGenerator.GenerateDictionary(clients);
+        var storage = new ClientStorage(persons);
+        var client = clients.First();
         var clientIvan = new Client
         {
             Name = "Ivan",
@@ -120,97 +113,29 @@ public class StorageClientTests
             OrderNumber = 1,
             OrderAmount = 1000m
         };
-        var clientSasha = new Client
-        {
-            Name = "Sasha",
-            Surname = "Ivanov",
-            Email = "akjsd@gmail.com",
-            PhoneNumber = "123456789",
-            Age = 25,
-            Address = "Tiraspol",
-            OrderNumber = 1,
-            OrderAmount = 1000m,
-        };
-        var clients = new Dictionary<Client, List<Account>>()
-        {
-            {clientIvan, new List<Account>()},
-            {clientSasha, new List<Account>()}
-        };
-        var storage = new ClientStorage(clients);
-
+        
         // Act
-        var result = storage.GetOldestClient();
-
+        storage.Update(client, clientIvan);
+        
         // Assert
-        Assert.Equal(clients.Max(c => c.Key.Age), result.Age);
+        Assert.Contains(clientIvan, storage.Get(c => Equals(c, clientIvan)));
     }
 
     [Fact]
-    public void GetOldestClient_ShouldThrowInvalidOperationException_WhenNoClientsExist()
+    public void UpdateClient_ShouldThrowArgumentNullException_WhenClientsIsNull()
     {
         // Arrange
-        var clients = new Dictionary<Client, List<Account>>();
-        var storage = new ClientStorage(clients);
-
+        var clients = TestDataGenerator.GenerateClients();
+        var persons = TestDataGenerator.GenerateDictionary(clients);
+        var storage = new ClientStorage(persons);
+        Client oldClient = null;
+        Client newClient = null;
+        
         // Act
-        var exception = Record.Exception(() => storage.GetOldestClient());
-
+        var exception = Record.Exception(() => storage.Update(oldClient, newClient));
+        
         // Assert
-        Assert.True(exception is InvalidOperationException);
-    }
-
-    [Fact]
-    public void GetAverageAge_ShouldReturnAverageAge_WhenClientsExist()
-    {
-        // Arrange
-        var clientIvan = new Client
-        {
-            Name = "Ivan",
-            Surname = "Ivanov",
-            Email = "akjsd@gmail.com",
-            PhoneNumber = "123456789",
-            Age = 25,
-            Address = "Tiraspol",
-            OrderNumber = 1,
-            OrderAmount = 1000m
-        };
-        var clientSasha = new Client
-        {
-            Name = "Sasha",
-            Surname = "Ivanov",
-            Email = "akjsd@gmail.com",
-            PhoneNumber = "123456789",
-            Age = 25,
-            Address = "Tiraspol",
-            OrderNumber = 1,
-            OrderAmount = 1000m,
-        };
-        var clients = new Dictionary<Client, List<Account>>()
-        {
-            {clientIvan, new List<Account>()},
-            {clientSasha, new List<Account>()}
-        };
-        var storage = new ClientStorage(clients);
-
-        // Act
-        var result = storage.GetAverageAge();
-
-        // Assert
-        Assert.Equal(25, result);
-    }
-
-    [Fact]
-    public void GetAverageAge_ShouldThrowInvalidOperationException_WhenNoClientsExist()
-    {
-        // Arrange
-        var clients = new Dictionary<Client, List<Account>>();
-        var storage = new ClientStorage(clients);
-
-        // Act
-        var exception = Record.Exception(() => storage.GetAverageAge());
-
-        // Assert
-        Assert.True(exception is InvalidOperationException);
+        Assert.True(exception is ArgumentNullException);
     }
 
     [Fact]
@@ -223,22 +148,23 @@ public class StorageClientTests
         var client = clients.First();
 
         // Act
-        storage.RemoveClient(client);
+        storage.Delete(client);
 
         // Assert
-        Assert.DoesNotContain(client, storage.Clients);
+        Assert.Empty( storage.Get(c => Equals(c, client)));
     }
 
     [Fact]
     public void RemoveClient_ShouldThrowArgumentNullException_WhenClientIsNull()
     {
         // Arrange
-        var employee = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employee);
-        Employee employeeIvan = null;
+        var clients = TestDataGenerator.GenerateClients();
+        var persons = TestDataGenerator.GenerateDictionary(clients);
+        var storage = new ClientStorage(persons);
+        Client employeeIvan = null;
 
         // Act
-        var exception = Record.Exception(() => storage.RemoveEmployee(employeeIvan));
+        var exception = Record.Exception(() => storage.Delete(employeeIvan));
 
         // Assert
         Assert.True(exception is ArgumentNullException);
@@ -264,9 +190,86 @@ public class StorageClientTests
         var storage = new ClientStorage(persons);
 
         // Act
-        var exception = Record.Exception(() => storage.RemoveClient(clientIvan));
+        var exception = Record.Exception(() => storage.Delete(clientIvan));
 
         //Assert
         Assert.True(exception is ArgumentException);
+    }
+    
+    [Fact]
+    public void AddAccount_ShouldAddAccount_WhenAccountIsValid()
+    {
+        // Arrange
+        var clients = TestDataGenerator.GenerateClients();
+        var persons = TestDataGenerator.GenerateDictionary(clients);
+        var storage = new ClientStorage(persons);
+        var client = clients.First();
+        var account = new Account
+        {
+            Currency = new Currency
+            {
+                Name = "Dollar",
+                Code = CurrencyCode.Usd
+            },
+            Amount = 0m
+        };
+        
+        // Act
+        storage.AddAccount(client, new List<Account>{account});
+        
+        // Assert
+        Assert.Contains(account, storage.Get(c => Equals(c, client)).Values.First());
+    }
+    
+    [Fact]
+    public void UpdateAccount_ShouldUpdateAccount_WhenAccountIsValid()
+    {
+        // Arrange
+        var clients = TestDataGenerator.GenerateClients();
+        var persons = TestDataGenerator.GenerateDictionary(clients);
+        var storage = new ClientStorage(persons);
+        var client = persons.Keys.First();
+        var oldAccount = persons.Values.First().First();
+        var newAccount = new Account
+        {
+            Currency = new Currency
+            {
+                Name = "Dollar",
+                Code = CurrencyCode.Usd
+            },
+            Amount = 100m
+        };
+        
+        // Act
+        storage.UpdateAccount(client, oldAccount, newAccount);
+        
+        // Assert
+        Assert.Equal(100m, storage.Get(c => Equals(c, client)).Values.First().Last().Amount);
+    }
+    
+    [Fact]
+    public void RemoveAccount_ShouldRemoveAccount_WhenAccountIsValid()
+    {
+        // Arrange
+        var clients = TestDataGenerator.GenerateClients();
+        var persons = TestDataGenerator.GenerateDictionary(clients);
+        var storage = new ClientStorage(persons);
+        var client = clients.First();
+        var account = new Account
+        {
+            Currency = new Currency
+            {
+                Name = "Dollar",
+                Code = CurrencyCode.Usd
+            },
+            Amount = 0m
+        };
+        storage.AddAccount(client, new List<Account>{account});
+        
+        // Act
+        storage.RemoveAccount(client, account);
+        
+        // Assert
+        Assert.DoesNotContain(account, storage.Get(c => Equals(c, client)).Values.First());
     }
 }

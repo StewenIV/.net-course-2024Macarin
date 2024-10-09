@@ -27,4 +27,6 @@ public class Person
     public string PassportDetails { get; set; }
 
     public DateTime BirthDate => DateTime.Now.AddYears(-Age);
+
+    public decimal Bonus { get; set; } = 0m;
 }

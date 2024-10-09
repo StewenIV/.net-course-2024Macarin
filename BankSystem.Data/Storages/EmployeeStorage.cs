@@ -1,8 +1,9 @@
+using BankSystem.Appl.Interfaces;
 using BankSystem.Dom.Models;
 
 namespace BankSystem.Data.Storages;
 
-public class EmployeeStorage
+public class EmployeeStorage : IEmployeeStorage
 {
     private readonly List<Employee> _employees;
 
@@ -11,9 +12,7 @@ public class EmployeeStorage
         _employees = employees;
     }
 
-    public List<Employee> Employees => _employees;
-
-    public void AddEmployee(Employee employee)
+    public void Add(Employee employee)
     {
         if (employee is null)
             throw new ArgumentNullException(nameof(employee));
@@ -22,28 +21,26 @@ public class EmployeeStorage
         _employees.Add(employee);
     }
 
-    public Employee GetYoungestEmployee()
+    public void Update(Employee oldEmployee, Employee newEmployee)
     {
-        if (!_employees.Any())
-            throw new InvalidOperationException("No employees in storage");
-        return _employees.Aggregate((youngest, next) => next.Age < youngest.Age ? next : youngest);
+        if (oldEmployee is null)
+            throw new ArgumentNullException(nameof(oldEmployee));
+        if (newEmployee is null)
+            throw new ArgumentNullException(nameof(newEmployee));
+        if (!_employees.Contains(oldEmployee))
+            throw new ArgumentException("Employee not found");
+        var index = _employees.IndexOf(oldEmployee);
+        _employees[index] = newEmployee;
     }
 
-    public Employee GetOldestEmployee()
+    public List<Employee> Get(Func<Employee, bool> filter)
     {
-        if (!_employees.Any())
-            throw new InvalidOperationException("No employees in storage");
-        return _employees.Aggregate((oldest, next) => oldest.Age < next.Age ? next : oldest);
+        if (filter is null)
+            throw new ArgumentNullException(nameof(filter));
+        return _employees.Where(filter).ToList();
     }
 
-    public int GetAverageAge()
-    {
-        if (!_employees.Any())
-            throw new InvalidOperationException("No employees in storage");
-        return (int)_employees.Average(c => c.Age);
-    }
-
-    public void RemoveEmployee(Employee employee)
+    public void Delete(Employee employee)
     {
         if (employee is null)
             throw new ArgumentNullException(nameof(employee));

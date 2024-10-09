@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using BankSystem.App.Services;
 using BankSystem.Appl.Exceptions;
+using BankSystem.Appl.Interfaces;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
 
@@ -32,9 +33,9 @@ public class ClientServiceTests
         clientService.AddClient(client);
 
         //Assert
-        Assert.Contains(clientService.GetClients(client.Name).Values, account =>
+        Assert.Contains(clientService.GetClients(c => c.Name == client.Name).Values, account =>
             account[0].Currency.Name == "Dollar" && account[0].Currency.Code == CurrencyCode.Usd);
-        Assert.NotEmpty(clientService.GetClients(client.Name));
+        Assert.NotEmpty(clientService.GetClients(c => c.Name == client.Name));
     }
 
     [Fact]
@@ -394,7 +395,7 @@ public class ClientServiceTests
         clientService.UpdateAccount(clientSasha, account);
 
         //Assert
-        Assert.Contains(clientService.GetClients(clientSasha.Name).Values, acc =>
+        Assert.Contains(clientService.GetClients(c => c.Name == clientSasha.Name).Values, acc =>
             acc[0].Currency.Name == "Dollar" && acc[0].Currency.Code == CurrencyCode.Usd && acc[0].Amount == 1000m);
     }
 
@@ -408,7 +409,7 @@ public class ClientServiceTests
         var client = clientAccounts.First().Key;
 
         //Act
-        var clients = clientService.GetClients(client.Name);
+        var clients = clientService.GetClients(c => c.Name == client.Name);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -424,7 +425,7 @@ public class ClientServiceTests
         var client = clientAccounts.First().Key;
 
         //Act
-        var clients = clientService.GetClients(surname: client.Surname);
+        var clients = clientService.GetClients(c => c.Surname == client.Surname);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -440,7 +441,7 @@ public class ClientServiceTests
         var client = clientAccounts.First().Key;
 
         //Act
-        var clients = clientService.GetClients(phoneNumber: client.PhoneNumber);
+        var clients = clientService.GetClients(c => c.PhoneNumber == client.PhoneNumber);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -456,7 +457,7 @@ public class ClientServiceTests
         var client = clientAccounts.First().Key;
 
         //Act
-        var clients = clientService.GetClients(passportDetails: client.PassportDetails);
+        var clients = clientService.GetClients(c => c.PassportDetails == client.PassportDetails);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -473,22 +474,7 @@ public class ClientServiceTests
         var end = DateTime.Now;
 
         //Act
-        var clients = clientService.GetClients(start: start, end: end);
-
-        //Assert
-        Assert.NotEmpty(clients);
-    }
-
-    [Fact]
-    public void GetClients_WhenClientIsNotDefined_ShouldReturnAllClientAccounts()
-    {
-        // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
-        var clientService = new ClientService(clientStorage);
-
-        //Act
-        var clients = clientService.GetClients();
+        var clients = clientService.GetClients(c => c.BirthDate >= start && c.BirthDate <= end);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -507,8 +493,10 @@ public class ClientServiceTests
 
 
         //Act
-        var clients = clientService.GetClients(client.Name, client.Surname, client.PhoneNumber, client.PassportDetails,
-            start, end);
+        var clients = clientService.GetClients(c => c.Name == client.Name && c.Surname == client.Surname &&
+                                                    c.PhoneNumber == client.PhoneNumber &&
+                                                    c.PassportDetails == client.PassportDetails &&
+                                                    c.BirthDate >= start && c.BirthDate <= end);
 
         //Assert
         Assert.NotEmpty(clients);
