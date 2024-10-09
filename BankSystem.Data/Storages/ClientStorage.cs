@@ -37,7 +37,7 @@ public class ClientStorage : IClientStorage
     {
         if (filter is null)
             throw new ArgumentNullException(nameof(filter));
-        return _clients.Keys.Where(filter).ToDictionary(c => c, c => _clients[c]);
+        return _clients.Where(kvp => filter(kvp.Key)).ToDictionary(kpv => kpv.Key, kpv => kpv.Value);
     }
 
     public void Update(Client oldClient, Client newClient)

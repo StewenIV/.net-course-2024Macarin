@@ -7,11 +7,11 @@ namespace BankSystem.App.Services;
 
 public class EmployeeService
 {
-    private readonly IEmployeeStorage _iStorage;
+    private readonly IEmployeeStorage _employeeStorage;
 
-    public EmployeeService(IEmployeeStorage iStorage)
+    public EmployeeService(IEmployeeStorage employeeStorage)
     {
-        _iStorage = iStorage;
+        _employeeStorage = employeeStorage;
     }
 
     public void AddEmployee(Employee employee)
@@ -30,7 +30,7 @@ public class EmployeeService
         if (employee.PassportDetails is null)
             throw new PassportDetailsNullException(nameof(employee.PassportDetails));
 
-        _iStorage.Add(employee);
+        _employeeStorage.Add(employee);
     }
     
     public List<Employee> GetEmployees(string name = null, string surname = null,
@@ -39,7 +39,7 @@ public class EmployeeService
     {
         if (end == default)
             end = DateTime.Now;
-        var clients = _iStorage.Get(c => (name == null || c.Name == name) &&
+        var clients = _employeeStorage.Get(c => (name == null || c.Name == name) &&
                                                             (surname == null || c.Surname == surname) &&
                                                             (phoneNumber == null || c.PhoneNumber == phoneNumber) &&
                                                             (passportDetails == null ||
@@ -56,15 +56,15 @@ public class EmployeeService
             throw new ArgumentNullException(nameof(oldEmployee));
         if (newEmployee is null)
             throw new ArgumentNullException(nameof(newEmployee));
-        if (!_iStorage.Get(c => Equals(c, oldEmployee)).Any())
+        if (!_employeeStorage.Get(c => Equals(c, oldEmployee)).Any())
             throw new ArgumentException("Employee not found");
-        _iStorage.Update(oldEmployee, newEmployee);
+        _employeeStorage.Update(oldEmployee, newEmployee);
     }
     
     public void RemoveEmployee(Employee employee)
     {
         if (employee is null)
             throw new ArgumentNullException(nameof(employee));
-        _iStorage.Delete(employee);
+        _employeeStorage.Delete(employee);
     }
 }
