@@ -7,7 +7,6 @@ namespace BankSystem.Dom.Models;
 
 public class Employee : Person
 {
-    [Required(ErrorMessage = "Position is required")]
     [MaxLength(50, ErrorMessage = "Position must be less than 50 characters")]
     public string Position { get; set; }
     [DataType(DataType.Date)]

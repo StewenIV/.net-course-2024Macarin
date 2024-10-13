@@ -9,7 +9,6 @@ public class Person
     [StringLength(50, MinimumLength = 5, ErrorMessage = "Name must be between 5 and 50")]
     public string Name { get; set; }
 
-    [Required(ErrorMessage = "Surname is required")]
     [StringLength(50, MinimumLength = 5, ErrorMessage = "Surname must be between 5 and 50")]
     public string Surname { get; set; }
 
@@ -22,10 +21,10 @@ public class Person
 
     [Range(0, 99, ErrorMessage = "Age must be between 18 and 99")]
     public int Age { get; set; }
-    
+
     [Required(ErrorMessage = "Address is required")]
-    [StringLength(100, MinimumLength = 10, ErrorMessage = "Address must be between 10 and 100")]
     public string Address { get; set; }
+
     public string PassportDetails { get; set; }
 
     public DateTime BirthDate => DateTime.Now.AddYears(-Age);
