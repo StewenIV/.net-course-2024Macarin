@@ -24,6 +24,7 @@ public class Person
 
     [Required(ErrorMessage = "Address is required")]
     public string Address { get; set; }
+
     public string PassportDetails { get; set; }
 
     public DateTime BirthDate => DateTime.Now.AddYears(-Age);
