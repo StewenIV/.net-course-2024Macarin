@@ -25,9 +25,9 @@ public class BankSystemDbContext : Microsoft.EntityFrameworkCore.DbContext
             .AddJsonFile(appSettingsPath)
             .Build();
         optionsBuilder.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
-        optionsBuilder.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
-            .EnableSensitiveDataLogging()
-            .LogTo(Console.WriteLine, LogLevel.Information);
+        optionsBuilder.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+        /*.EnableSensitiveDataLogging()
+        .LogTo(Console.WriteLine, LogLevel.Information);*/
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

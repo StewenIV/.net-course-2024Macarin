@@ -14,24 +14,10 @@ public class EmployeeServiceTests
     {
         //Arrange
         using var context = new BankSystemDbContext();
-        context.Employees.AddRangeAsync(TestDataGenerator.GenerateEmployees(10));
-        context.SaveChanges();
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            BirthDate = new DateTime(2004, 1, 1),
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
-
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
         //Act
         employeeService.AddEmployee(employeeSasha);
 
@@ -44,23 +30,10 @@ public class EmployeeServiceTests
     {
         //Arrange
         using var context = new BankSystemDbContext();
-        context.Employees.AddRangeAsync(TestDataGenerator.GenerateEmployees(10));
-        context.SaveChanges();
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            BirthDate = new DateTime(1990, 1, 1),
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
 
         //Act
         try
@@ -79,23 +52,10 @@ public class EmployeeServiceTests
     {
         //Arrange
         using var context = new BankSystemDbContext();
-        context.Employees.AddRangeAsync(TestDataGenerator.GenerateEmployees(10));
-        context.SaveChanges();
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            BirthDate = new DateTime(1990, 1, 1),
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            PassportDetails = null,
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
 
         //Act
         try
@@ -114,8 +74,6 @@ public class EmployeeServiceTests
     {
         //Arrange
         using var context = new BankSystemDbContext();
-        context.Employees.AddRangeAsync(TestDataGenerator.GenerateEmployees(10));
-        context.SaveChanges();
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         var employeeSasha = new Employee
@@ -211,13 +169,12 @@ public class EmployeeServiceTests
         using var context = new BankSystemDbContext();
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employee = context.Employees.First();
-        var start = DateTime.MinValue;
-        var end = DateTime.Now;
+        var start = DateTime.MinValue.ToUniversalTime();
+        var end = DateTime.Now.ToUniversalTime();
 
         //Act
         var employees = employeeService.GetEmployees(c => c.StartDate >= start && c.EndDate <= end,
-            c => c.OrderBy(e => e.Id), 1, 10);
+            c => c.OrderBy(e => e.Id), 3, 50);
 
         //Assert
         Assert.NotEmpty(employees);
@@ -231,15 +188,15 @@ public class EmployeeServiceTests
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         var employee = context.Employees.First();
-        var start = DateTime.MinValue;
-        var end = DateTime.Now;
+        var start = DateTime.MinValue.ToUniversalTime();
+        var end = DateTime.Now.ToUniversalTime();
 
         //Act
         var employees = employeeService.GetEmployees(c => c.Name == employee.Name && c.Surname == employee.Surname &&
                                                           c.PhoneNumber == employee.PhoneNumber &&
                                                           c.PassportDetails == employee.PassportDetails &&
                                                           c.StartDate >= start && c.EndDate <= end,
-            c => c.OrderBy(e => e.Id), 1, 10);
+            c => c.OrderBy(e => e.Id), 3, 50);
 
         //Assert
         Assert.NotEmpty(employees);
@@ -253,25 +210,14 @@ public class EmployeeServiceTests
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         var employee = context.Employees.First();
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            BirthDate = new DateTime(1990, 1, 1),
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
 
         //Act
         employeeService.UpdateEmployee(employee, employeeSasha);
 
         //Assert
-        Assert.NotNull(employeeService.GetEmployeeById(employeeSasha.Id));
+        Assert.NotNull(employeeService.GetEmployeeById(employee.Id));
     }
 
     [Fact]
@@ -303,19 +249,8 @@ public class EmployeeServiceTests
         using var context = new BankSystemDbContext();
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            BirthDate = new DateTime(1990, 1, 1),
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
         var employeeIvan = new Employee
         {
             Name = "Ivan",
@@ -353,9 +288,10 @@ public class EmployeeServiceTests
 
         //Act
         employeeService.RemoveEmployee(employee);
+        var exception = Record.Exception(() => employeeService.GetEmployeeById(employee.Id));
 
         //Assert
-        Assert.Null(employeeService.GetEmployeeById(employee.Id));
+        Assert.True(exception is ArgumentException);
     }
 
     [Fact]

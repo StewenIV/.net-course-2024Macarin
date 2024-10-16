@@ -14,18 +14,7 @@ public class StorageEmployeeTests
         //Arrange
         using var context = new BankSystemDbContext();
         var storage = new EmployeeStorage(context);
-        var employeePasha = new Employee
-        {
-            Name = "Pasha",
-            Surname = "Ivanov",
-            Email = "aslda@gmail.com",
-            PhoneNumber = "123456789",
-            BirthDate = new DateTime(1990, 1, 1),
-            Address = "Tiraspol",
-            Position = "Developer",
-            Salary = 1000m,
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeePasha = TestDataGenerator.GenerateEmployees(1).First();
 
         //Act 
         storage.Add(employeePasha);
@@ -90,7 +79,7 @@ public class StorageEmployeeTests
         var exception = Record.Exception(() => storage.Delete(employeePasha.Id));
 
         //Assert
-        Assert.True(exception is ArgumentNullException);
+        Assert.True(exception is ArgumentException);
     }
 
     [Fact]

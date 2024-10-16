@@ -94,22 +94,22 @@ public class ClientService
         }
     }
 
-    public void UpdateAccount(Client client, Account updateAccount)
+    public void UpdateAccount(Client client, Account oldAccount, Account updateAccount)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
         if (updateAccount is null)
             throw new ArgumentNullException(nameof(updateAccount));
+        if(oldAccount is null)
+            throw new ArgumentNullException(nameof(oldAccount));
         var byId = _clientStorage.GetById(client.Id);
         if (byId is null)
             throw new ArgumentException("Client not found");
-        var clientAccounts = client.Accounts;
-        var existingAccount = clientAccounts.Find(a => a.Currency.Code == updateAccount.Currency.Code);
-        if (existingAccount is null)
+        if (oldAccount is null)
             throw new ArgumentException("Account not found");
         if (Validator.TryValidateObject(updateAccount, new ValidationContext(updateAccount), null, true) == false)
             throw new ValidationException("Account is not valid");
-        _clientStorage.UpdateAccount(client.Id, existingAccount.Id, updateAccount);
+        _clientStorage.UpdateAccount(client.Id, oldAccount.Id, updateAccount);
     }
 
     public void RemoveAccount(Client client, Account account)

@@ -35,8 +35,8 @@ public class ClientStorage : IClientStorage
             throw new ArgumentException("Client already exists");
         _context.Clients.Add(client);
         var defaultAccount = "USD(Dollar)";
-        var account = new Account { CurrencyName = defaultAccount, Client = client, Amount = 0m };
-        client.Accounts.Add(account);
+        var account = new Account { Id = Guid.NewGuid(), CurrencyName = defaultAccount, Client = client, Amount = 0m };
+        _context.Accounts.Add(account);
         _context.SaveChanges();
     }
 
@@ -47,18 +47,20 @@ public class ClientStorage : IClientStorage
         if (account is null)
             throw new ArgumentNullException(nameof(account));
         var clientById = GetById(clientId);
-        if (clientById is not null)
+        if (clientById is null)
             throw new ArgumentException("Client not found");
-        clientById.Accounts.Add(account);
+        _context.Accounts.Add(account);
         _context.SaveChanges();
     }
 
     public void Update(Guid clientId, Client newClient)
     {
+        if (clientId == Guid.Empty)
+            throw new ArgumentNullException(nameof(clientId));
         if (newClient is null)
             throw new ArgumentNullException(nameof(newClient));
         var client = GetById(clientId);
-        if (client is not null)
+        if (client is null)
             throw new ArgumentException("Client not found");
         client.Name = newClient.Name;
         client.Surname = newClient.Surname;
@@ -96,7 +98,7 @@ public class ClientStorage : IClientStorage
         var account = clientById.Accounts.FirstOrDefault(a => a.Id == accountId);
         if (account is not null)
             throw new ArgumentException("Account not found");
-        clientById.Accounts.Remove(account);
+        _context.Accounts.Remove(account);
         _context.SaveChanges();
     }
 
@@ -110,12 +112,10 @@ public class ClientStorage : IClientStorage
             throw new ArgumentNullException(nameof(updatedAccount));
         var client = GetById(clientId);
         if (client is null)
-            throw new ArgumentException("Client not found");
+            throw new ArgumentException("Client not found"); 
         var account = client.Accounts.FirstOrDefault(a => a.Id == oldAccountId);
-        if (account is null)
-            throw new ArgumentException("Account not found");
-        account.CurrencyName = updatedAccount.CurrencyName;
-        account.Amount = updatedAccount.Amount;
+        _context.Entry(account).Property(a => a.CurrencyName).CurrentValue = updatedAccount.CurrencyName;
+        _context.Entry(account).Property(a => a.Amount).CurrentValue = updatedAccount.Amount;
         _context.SaveChanges();
     }
 

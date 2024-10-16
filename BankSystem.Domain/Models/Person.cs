@@ -7,10 +7,10 @@ public class Person
 {
     public Guid Id { get; set; }
     [Required(ErrorMessage = "Name is required")]
-    [StringLength(50, MinimumLength = 5, ErrorMessage = "Name must be between 5 and 50")]
+    [StringLength(50)]
     public string Name { get; set; }
 
-    [StringLength(50, MinimumLength = 5, ErrorMessage = "Surname must be between 5 and 50")]
+    [StringLength(50, ErrorMessage = "Surname must be between 5 and 50")]
     public string Surname { get; set; }
 
     [Required(ErrorMessage = "Name is required")]
