@@ -35,15 +35,10 @@ public class BankService
             Surname = client.Surname,
             Email = client.Email,
             PhoneNumber = client.PhoneNumber,
-            Age = client.Age,
+            BirthDate = client.BirthDate,
             Address = client.Address,
             Position = "Client Manager",
             Salary = 1000m,
-            Currency = new Currency
-            {
-                Name = "Dollar",
-                Code = CurrencyCode.Usd,
-            },
             EndDate = DateTime.Now.AddYears(1)
         };
     }

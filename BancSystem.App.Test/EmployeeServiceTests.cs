@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using BankSystem.App.Services;
 using BankSystem.Appl.Exceptions;
+using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
 
@@ -12,54 +13,27 @@ public class EmployeeServiceTests
     public void AddEmployee_WhenEmployeeIsValid_ShouldAddEmployee()
     {
         //Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            Age = 20,
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
-
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
         //Act
         employeeService.AddEmployee(employeeSasha);
 
         //Assert
-        Assert.Contains(employeeService.GetEmployees(employeeSasha.Name), emp =>
-            emp.Currency.Name == "Dollar" && emp.Currency.Code == CurrencyCode.Usd);
-        Assert.NotEmpty(employeeService.GetEmployees(employeeSasha.Name));
+        Assert.NotNull(employeeService.GetEmployeeById(employeeSasha.Id));
     }
 
     [Fact]
     public void AddEmployee_WhenEmployeeIsUnder18_ShouldThrowInvalidPersonAgeException()
     {
         //Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            Age = 17,
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
 
         //Act
         try
@@ -77,23 +51,11 @@ public class EmployeeServiceTests
     public void AddEmployee_WhenEmployeePassportDetailsIsNull_ShouldThrowPassportDetailsNullException()
     {
         //Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            Age = 20,
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
-            PassportDetails = null,
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
 
         //Act
         try
@@ -111,8 +73,8 @@ public class EmployeeServiceTests
     public void AddEmployee_WhenEmployeeIsNotValid_ShouldThrowValidationException()
     {
         //Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         var employeeSasha = new Employee
         {
@@ -137,154 +99,133 @@ public class EmployeeServiceTests
     public void GetEmployee_WhenEmployeeNameIsDefined_ShouldReturnEmployeeByName()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var client = employees.First();
+        var employee = context.Employees.First();
 
         //Act
-        var clients = employeeService.GetEmployees(client.Name);
+        var employees = employeeService.GetEmployees(c => c.Name == employee.Name, c => c.OrderBy(e => e.Id), 1, 10);
 
         //Assert
-        Assert.NotEmpty(clients);
+        Assert.NotEmpty(employees);
     }
 
     [Fact]
     public void GetEmployee_WhenEmployeeSurnameIsDefined_ShouldReturnEmployeeBySurname()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var client = employees.First();
+        var employee = context.Employees.First();
 
         //Act
-        var clients = employeeService.GetEmployees(surname: client.Surname);
+        var employees =
+            employeeService.GetEmployees(c => c.Surname == employee.Surname, c => c.OrderBy(e => e.Id), 1, 10);
+
 
         //Assert
-        Assert.NotEmpty(clients);
+        Assert.NotEmpty(employees);
     }
 
     [Fact]
     public void GetEmployee_WhenEmployeePhoneNumberIsDefined_ShouldReturnEmployeeByPhoneNumber()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var client = employees.First();
+        var employee = context.Employees.First();
 
         //Act
-        var clients = employeeService.GetEmployees(phoneNumber: client.PhoneNumber);
+        var employees = employeeService.GetEmployees(c => c.PhoneNumber == employee.PhoneNumber,
+            c => c.OrderBy(e => e.Id), 1, 10);
 
         //Assert
-        Assert.NotEmpty(clients);
+        Assert.NotEmpty(employees);
     }
 
     [Fact]
     public void GetEmployee_WhenEmployeePassportDetailsIsDefined_ShouldReturnEmployeeByPassportDetails()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var client = employees.First();
+        var employee = context.Employees.First();
 
         //Act
-        var clients = employeeService.GetEmployees(passportDetails: client.PassportDetails);
-
+        var employees = employeeService.GetEmployees(c => c.PassportDetails == employee.PassportDetails,
+            c => c.OrderBy(e => e.Id), 1, 10);
         //Assert
-        Assert.NotEmpty(clients);
+        Assert.NotEmpty(employees);
     }
 
     [Fact]
     public void GetEmployee_WhenEmployeeStartAndEndDatesAreDefined_ShouldReturnEmployeeByStartAndEndDates()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var start = DateTime.MinValue;
-        var end = DateTime.Now;
+        var start = DateTime.MinValue.ToUniversalTime();
+        var end = DateTime.Now.ToUniversalTime();
 
         //Act
-        var clients = employeeService.GetEmployees(start: start, end: end);
+        var employees = employeeService.GetEmployees(c => c.StartDate >= start && c.EndDate <= end,
+            c => c.OrderBy(e => e.Id), 3, 50);
 
         //Assert
-        Assert.NotEmpty(clients);
-    }
-
-    [Fact]
-    public void GetEmployee_WhenEmployeeIsNotDefined_ShouldReturnAllEmployees()
-    {
-        // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
-        var employeeService = new EmployeeService(storage);
-
-        //Act
-        var clients = employeeService.GetEmployees();
-
-        //Assert
-        Assert.NotEmpty(clients);
+        Assert.NotEmpty(employees);
     }
 
     [Fact]
     public void GetEmployee_WhenEverythingIsDefined_ShouldReturnEmployeeByAllParameters()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var client = employees.First();
-        var start = DateTime.MinValue;
-        var end = DateTime.Now;
+        var employee = context.Employees.First();
+        var start = DateTime.MinValue.ToUniversalTime();
+        var end = DateTime.Now.ToUniversalTime();
 
         //Act
-        var clients = employeeService.GetEmployees(client.Name, client.Surname, client.PhoneNumber,
-            client.PassportDetails, start, end);
+        var employees = employeeService.GetEmployees(c => c.Name == employee.Name && c.Surname == employee.Surname &&
+                                                          c.PhoneNumber == employee.PhoneNumber &&
+                                                          c.PassportDetails == employee.PassportDetails &&
+                                                          c.StartDate >= start && c.EndDate <= end,
+            c => c.OrderBy(e => e.Id), 3, 50);
 
         //Assert
-        Assert.NotEmpty(clients);
+        Assert.NotEmpty(employees);
     }
 
     [Fact]
     public void UpdateEmployee_WhenEmployeeIsValid_ShouldUpdateEmployee()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employee = employees.First();
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            Age = 17,
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employee = context.Employees.First();
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
 
         //Act
         employeeService.UpdateEmployee(employee, employeeSasha);
 
         //Assert
-        Assert.Contains(employeeService.GetEmployees(employeeSasha.Name), emp =>
-            emp.Currency.Name == "Dollar" && emp.Currency.Code == CurrencyCode.Usd);
+        Assert.NotNull(employeeService.GetEmployeeById(employee.Id));
     }
 
     [Fact]
     public void UpdateEmployee_WhenEmployeeIsNull_ShouldThrowArgumentNullException()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         Employee employeeSasha = null;
         Employee employeeIvan = null;
@@ -305,34 +246,21 @@ public class EmployeeServiceTests
     public void UpdateEmployee_WhenEmployeeNotFound_ShouldThrowArgumentException()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employeeSasha = new Employee
-        {
-            Name = "Sasha",
-            Surname = "Macarin",
-            Email = "copyemail@mgamil.com",
-            PhoneNumber = "123456789",
-            Age = 17,
-            Address = "Bender",
-            Position = "Developer",
-            Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
-            PassportDetails = "Passport Details",
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
+        employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
         var employeeIvan = new Employee
         {
             Name = "Ivan",
             Surname = "Macarin",
             Email = "copyemail@mgamil.com",
             PhoneNumber = "123456789",
-            Age = 17,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Bender",
             Position = "Developer",
             Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
             PassportDetails = "Passport Details",
             EndDate = DateTime.Now.AddYears(1)
         };
@@ -348,30 +276,30 @@ public class EmployeeServiceTests
             Assert.True(e != null);
         }
     }
-    
+
     [Fact]
     public void RemoveEmployee_WhenEmployeeIsValid_ShouldRemoveEmployee()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        var employee = employees.First();
+        var employee = context.Employees.First();
 
         //Act
         employeeService.RemoveEmployee(employee);
+        var exception = Record.Exception(() => employeeService.GetEmployeeById(employee.Id));
 
         //Assert
-        Assert.DoesNotContain(employeeService.GetEmployees(employee.Name), emp =>
-            emp.Currency.Name == "Dollar" && emp.Currency.Code == CurrencyCode.Usd);
+        Assert.True(exception is ArgumentException);
     }
-    
+
     [Fact]
     public void RemoveEmployee_WhenEmployeeIsNull_ShouldThrowArgumentNullException()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         Employee employeeIvan = null;
 

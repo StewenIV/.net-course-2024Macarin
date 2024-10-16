@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 using BankSystem.Appl.Exceptions;
 using BankSystem.Appl.Interfaces;
 using BankSystem.Dom.Models;
@@ -12,6 +13,13 @@ public class ClientService
     public ClientService(IClientStorage clientStorage)
     {
         _clientStorage = clientStorage;
+    }
+
+    public Client GetClientById(Guid clientId)
+    {
+        if (clientId == Guid.Empty)
+            throw new ArgumentNullException(nameof(clientId));
+        return _clientStorage.GetById(clientId);
     }
 
     public void AddClient(Client client)
@@ -32,11 +40,12 @@ public class ClientService
         _clientStorage.Add(client);
     }
 
-    public Dictionary<Client, List<Account>> GetClients(Func<Client, bool> filter)
+    public List<Client> GetClients(Expression<Func<Client, bool>> filter,
+        Func<IQueryable<Client>, IOrderedQueryable<Client>> orderBy, int page, int pageSize)
     {
-        if(filter is null)
+        if (filter is null)
             throw new ArgumentNullException(nameof(filter));
-        return _clientStorage.Get(filter);
+        return _clientStorage.Get(filter, orderBy, page, pageSize);
     }
 
     public void UpdateClient(Client oldClient, Client newClient)
@@ -45,18 +54,20 @@ public class ClientService
             throw new ArgumentNullException(nameof(oldClient));
         if (newClient is null)
             throw new ArgumentNullException(nameof(newClient));
-        if (!_clientStorage.Get(c => Equals(c, oldClient)).Any())
+        var byId = _clientStorage.GetById(oldClient.Id);
+        if (byId is null)
             throw new ArgumentException("Client not found");
-        _clientStorage.Update(oldClient, newClient);
+        _clientStorage.Update(oldClient.Id, newClient);
     }
 
     public void RemoveClient(Client client)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
-        if (!_clientStorage.Get(c => Equals(c, client)).Any())
+        var byId = _clientStorage.GetById(client.Id);
+        if (byId is null)
             throw new ArgumentException("Client not found");
-        _clientStorage.Delete(client);
+        _clientStorage.Delete(client.Id);
     }
 
     public void AddAdditionalAccount(Client client, List<Account> accounts)
@@ -65,7 +76,8 @@ public class ClientService
             throw new ArgumentNullException(nameof(client));
         if (accounts is null)
             throw new ArgumentNullException(nameof(accounts));
-        if (!_clientStorage.Get(c => Equals(c, client)).Any())
+        var byId = _clientStorage.GetById(client.Id);
+        if (byId is null)
             throw new ArgumentException("Client not found");
         foreach (var account in accounts)
         {
@@ -77,26 +89,27 @@ public class ClientService
                 var errorMessage = string.Join("; ", validationResults.Select(vr => vr.ErrorMessage));
                 throw new ValidationException($"Account is not valid: {errorMessage}");
             }
-        }
 
-        _clientStorage.AddAccount(client, accounts);
+            _clientStorage.AddAccount(client.Id, account);
+        }
     }
 
-    public void UpdateAccount(Client client, Account updateAccount)
+    public void UpdateAccount(Client client, Account oldAccount, Account updateAccount)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
         if (updateAccount is null)
             throw new ArgumentNullException(nameof(updateAccount));
-        if (!_clientStorage.Get(c => Equals(c, client)).Any())
+        if(oldAccount is null)
+            throw new ArgumentNullException(nameof(oldAccount));
+        var byId = _clientStorage.GetById(client.Id);
+        if (byId is null)
             throw new ArgumentException("Client not found");
-        var clientAccounts = _clientStorage.Get(c => Equals(c, client)).First().Value;
-        var existingAccount = clientAccounts.Find(a => a.Currency.Code == updateAccount.Currency.Code);
-        if (existingAccount is null)
+        if (oldAccount is null)
             throw new ArgumentException("Account not found");
         if (Validator.TryValidateObject(updateAccount, new ValidationContext(updateAccount), null, true) == false)
             throw new ValidationException("Account is not valid");
-        existingAccount.Amount = updateAccount.Amount;
+        _clientStorage.UpdateAccount(client.Id, oldAccount.Id, updateAccount);
     }
 
     public void RemoveAccount(Client client, Account account)
@@ -105,8 +118,9 @@ public class ClientService
             throw new ArgumentNullException(nameof(client));
         if (account is null)
             throw new ArgumentNullException(nameof(account));
-        if (!_clientStorage.Get(c => Equals(c, client)).Any())
+        var byId = _clientStorage.GetById(client.Id);
+        if (byId is null)
             throw new ArgumentException("Client not found");
-        _clientStorage.RemoveAccount(client, account);
+        _clientStorage.RemoveAccount(client.Id, account.Id);
     }
 }

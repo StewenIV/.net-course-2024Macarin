@@ -1,102 +1,140 @@
+using System.Linq.Expressions;
 using System.Reflection;
 using BankSystem.Appl.Interfaces;
+using BankSystem.Data.DbContext;
 using BankSystem.Dom.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BankSystem.Data.Storages;
 
 public class ClientStorage : IClientStorage
 {
-    private readonly Dictionary<Client, List<Account>> _clients;
+    private readonly BankSystemDbContext _context;
 
-    public ClientStorage(Dictionary<Client, List<Account>> clients)
+    public ClientStorage(BankSystemDbContext context)
     {
-        _clients = clients;
+        _context = context;
+    }
+
+    public Client GetById(Guid clientId)
+    {
+        var client = _context.Clients
+            .Include(c => c.Accounts)
+            .FirstOrDefault(c => c.Id == clientId);
+        if (client is null)
+            throw new ArgumentException("Client not found");
+        return client;
     }
 
     public void Add(Client client)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
-        var accounts = new List<Account>()
-        {
-            new()
-            {
-                Currency = new Currency
-                {
-                    Name = "Dollar",
-                    Code = CurrencyCode.Usd
-                },
-                Amount = 0m
-            }
-        };
-        if (!_clients.TryAdd(client, accounts))
+        var clientsExist = _context.Clients.Any(c => c.Email == client.Email);
+        if (clientsExist)
             throw new ArgumentException("Client already exists");
+        _context.Clients.Add(client);
+        var defaultAccount = "USD(Dollar)";
+        var account = new Account { Id = Guid.NewGuid(), CurrencyName = defaultAccount, Client = client, Amount = 0m };
+        _context.Accounts.Add(account);
+        _context.SaveChanges();
     }
 
-    public Dictionary<Client, List<Account>> Get(Func<Client, bool> filter)
+    public void AddAccount(Guid clientId, Account account)
     {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
-        return _clients.Where(kvp => filter(kvp.Key)).ToDictionary(kpv => kpv.Key, kpv => kpv.Value);
-    }
-
-    public void Update(Client oldClient, Client newClient)
-    {
-        if (oldClient is null)
-            throw new ArgumentNullException(nameof(oldClient));
-        if (newClient is null)
-            throw new ArgumentNullException(nameof(newClient));
-        if (!_clients.ContainsKey(oldClient))
-            throw new ArgumentException("Client not found");
-        var accounts = _clients[oldClient];
-        _clients.Remove(oldClient);
-        _clients.Add(newClient, accounts);
-    }
-
-    public void Delete(Client client)
-    {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        if (!_clients.ContainsKey(client))
-            throw new ArgumentException("Client not found");
-        _clients.Remove(client);
-    }
-
-    public void AddAccount(Client client, List<Account> accounts)
-    {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        if (accounts is null)
-            throw new ArgumentNullException(nameof(accounts));
-        if (!_clients.ContainsKey(client))
-            throw new ArgumentException("Client not found");
-        _clients[client].AddRange(accounts);
-    }
-
-    public void RemoveAccount(Client client, Account account)
-    {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
+        if (clientId == Guid.Empty)
+            throw new ArgumentNullException(nameof(clientId));
         if (account is null)
             throw new ArgumentNullException(nameof(account));
-        if (!_clients.ContainsKey(client))
+        var clientById = GetById(clientId);
+        if (clientById is null)
             throw new ArgumentException("Client not found");
-        if (!_clients[client].Remove(account))
-            throw new ArgumentException("Account not found");
+        _context.Accounts.Add(account);
+        _context.SaveChanges();
     }
 
-    public void UpdateAccount(Client client, Account oldAccount, Account newAccount)
+    public void Update(Guid clientId, Client newClient)
     {
+        if (clientId == Guid.Empty)
+            throw new ArgumentNullException(nameof(clientId));
+        if (newClient is null)
+            throw new ArgumentNullException(nameof(newClient));
+        var client = GetById(clientId);
         if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        if (oldAccount is null)
-            throw new ArgumentNullException(nameof(oldAccount));
-        if (newAccount is null)
-            throw new ArgumentNullException(nameof(newAccount));
-        if (!_clients.ContainsKey(client))
             throw new ArgumentException("Client not found");
-        if (!_clients[client].Remove(oldAccount))
+        client.Name = newClient.Name;
+        client.Surname = newClient.Surname;
+        client.PhoneNumber = newClient.PhoneNumber;
+        client.Email = newClient.Email;
+        client.Address = newClient.Address;
+        client.PassportDetails = newClient.PassportDetails;
+        client.BirthDate = newClient.BirthDate;
+        client.Bonus = newClient.Bonus;
+        client.OrderAmount = newClient.OrderAmount;
+        client.OrderNumber = newClient.OrderNumber;
+        _context.SaveChanges();
+    }
+
+    public void Delete(Guid clientId)
+    {
+        if (clientId == Guid.Empty)
+            throw new ArgumentNullException(nameof(clientId));
+        var clientById = GetById(clientId);
+        if (clientById is not null)
+            throw new ArgumentException("Client not found");
+        _context.Clients.Remove(clientById);
+        _context.SaveChanges();
+    }
+
+    public void RemoveAccount(Guid clientId, Guid accountId)
+    {
+        if (clientId == Guid.Empty)
+            throw new ArgumentNullException(nameof(clientId));
+        if (accountId == Guid.Empty)
+            throw new ArgumentNullException(nameof(accountId));
+        var clientById = GetById(clientId);
+        if (clientById is not null)
+            throw new ArgumentException("Client not found");
+        var account = clientById.Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (account is not null)
             throw new ArgumentException("Account not found");
-        _clients[client].Add(newAccount);
+        _context.Accounts.Remove(account);
+        _context.SaveChanges();
+    }
+
+    public void UpdateAccount(Guid clientId, Guid oldAccountId, Account updatedAccount)
+    {
+        if (clientId == Guid.Empty)
+            throw new ArgumentNullException(nameof(clientId));
+        if (oldAccountId == Guid.Empty)
+            throw new ArgumentNullException(nameof(oldAccountId));
+        if (updatedAccount is null)
+            throw new ArgumentNullException(nameof(updatedAccount));
+        var client = GetById(clientId);
+        if (client is null)
+            throw new ArgumentException("Client not found"); 
+        var account = client.Accounts.FirstOrDefault(a => a.Id == oldAccountId);
+        _context.Entry(account).Property(a => a.CurrencyName).CurrentValue = updatedAccount.CurrencyName;
+        _context.Entry(account).Property(a => a.Amount).CurrentValue = updatedAccount.Amount;
+        _context.SaveChanges();
+    }
+
+    public List<Client> Get(Expression<Func<Client, bool>> filter,
+        Func<IQueryable<Client>, IOrderedQueryable<Client>> orderBy, int page, int pageSize)
+    {
+        IQueryable<Client> clientsQuery = _context.Clients.Include(c => c.Accounts);
+        if (filter != null)
+            clientsQuery = clientsQuery.Where(filter);
+        
+        clientsQuery = orderBy != null ? orderBy(clientsQuery) : clientsQuery.OrderBy(c => c.Id);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 10 : pageSize;
+
+        var pagedClients = clientsQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return pagedClients;
     }
 }

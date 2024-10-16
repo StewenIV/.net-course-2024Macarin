@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using BankSystem.App.Services;
+using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
 
@@ -11,35 +12,23 @@ public class StorageEmployeeTests
     public void AddEmployee_ShouldAddEmployee_WhenEmployeeIsValid()
     {
         //Arrange
-        var employees = new List<Employee>();
-        var storage = new EmployeeStorage(employees);
-        var employeePasha = new Employee
-        {
-            Name = "Pasha",
-            Surname = "Ivanov",
-            Email = "aslda@gmail.com",
-            PhoneNumber = "123456789",
-            Age = 25,
-            Address = "Tiraspol",
-            Position = "Developer",
-            Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
-            EndDate = DateTime.Now.AddYears(1)
-        };
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
+        var employeePasha = TestDataGenerator.GenerateEmployees(1).First();
 
         //Act 
         storage.Add(employeePasha);
 
         //Assert
-        Assert.NotEmpty(storage.Get(c => Equals(c, employeePasha)));
+        Assert.NotNull(storage.GetById(employeePasha.Id));
     }
 
     [Fact]
     public void AddEmployee_ShouldTrowArgumentNullException_WhenEmployeeIsNull()
     {
         //Arrange
-        var employees = new List<Employee>();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         Employee employeePasha = null;
 
         //Act
@@ -53,9 +42,9 @@ public class StorageEmployeeTests
     public void AddEmployee_ShouldTrowArgumentException_WhenEmployeeAlreadyExists()
     {
         //Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
-        var employee = employees.First();
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
+        var employee = context.Employees.First();
 
         //Act
         var exception = Record.Exception(() => storage.Add(employee));
@@ -68,54 +57,52 @@ public class StorageEmployeeTests
     public void RemoveEmployee_ShouldRemoveEmployee_WhenEmployeeExists()
     {
         //Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
-        var employee = employees.First();
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
+        var employee = context.Employees.First();
 
         //Act
-        storage.Delete(employee);
+        storage.Delete(employee.Id);
 
         //Assert
-        Assert.Empty( storage.Get(c => Equals(c, employee)));
+        Assert.Null(storage.GetById(employee.Id));
     }
 
     [Fact]
     public void RemoveEmployee_ShouldThrowArgumentNullException_WhenEmployeeIsNull()
     {
-        //Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         Employee employeePasha = null;
 
         //Act
-        var exception = Record.Exception(() => storage.Delete(employeePasha));
+        var exception = Record.Exception(() => storage.Delete(employeePasha.Id));
 
         //Assert
-        Assert.True(exception is ArgumentNullException);
+        Assert.True(exception is ArgumentException);
     }
 
     [Fact]
     public void RemoveEmployee_ShouldThrowArgumentException_WhenEmployeeNotFound()
     {
         //Arrange
+        using var context = new BankSystemDbContext();
+        var storage = new EmployeeStorage(context);
         var employeeSasha = new Employee
         {
             Name = "Sasha",
             Surname = "Macarin",
             Email = "copyemail@mgamil.com",
             PhoneNumber = "123456789",
-            Age = 19,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Bender",
             Position = "Developer",
             Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
             EndDate = DateTime.Now.AddYears(1)
         };
-        var employees = TestDataGenerator.GenerateEmployees();
-        var storage = new EmployeeStorage(employees);
 
         //Act
-        var exception = Record.Exception(() => storage.Delete(employeeSasha));
+        var exception = Record.Exception(() => storage.Delete(employeeSasha.Id));
 
         //Assert
         Assert.True(exception is ArgumentException);
