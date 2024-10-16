@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 using BankSystem.Appl.Exceptions;
 using BankSystem.Appl.Interfaces;
 using BankSystem.Dom.Models;
@@ -12,6 +13,20 @@ public class EmployeeService
     public EmployeeService(IEmployeeStorage employeeStorage)
     {
         _employeeStorage = employeeStorage;
+    }
+    
+    public bool IsEmployeeExist(Guid employeeId)
+    {
+        if(employeeId == Guid.Empty)
+            throw new ArgumentNullException(nameof(employeeId));
+        return _employeeStorage.IsEmployeeExist(employeeId);
+    }
+    
+    public Employee GetEmployeeById(Guid employeeId)
+    {
+        if(employeeId == Guid.Empty)
+            throw new ArgumentNullException(nameof(employeeId));
+        return _employeeStorage.GetById(employeeId);
     }
 
     public void AddEmployee(Employee employee)
@@ -32,39 +47,31 @@ public class EmployeeService
 
         _employeeStorage.Add(employee);
     }
-    
-    public List<Employee> GetEmployees(string name = null, string surname = null,
-        string phoneNumber = null,
-        string passportDetails = null, DateTime start = default, DateTime end = default)
+
+    public List<Employee> GetEmployees(Expression<Func<Employee, bool>> filter,
+        Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy, int page, int pageSize)
     {
-        if (end == default)
-            end = DateTime.Now;
-        var clients = _employeeStorage.Get(c => (name == null || c.Name == name) &&
-                                                            (surname == null || c.Surname == surname) &&
-                                                            (phoneNumber == null || c.PhoneNumber == phoneNumber) &&
-                                                            (passportDetails == null ||
-                                                             c.PassportDetails == passportDetails) &&
-                                                            ((start == default || c.BirthDate >= start) &&
-                                                             (end != default || c.BirthDate <= end)))
-            .ToList();
-        return clients;
+        if (filter is null)
+            throw new ArgumentNullException(nameof(filter));
+        return _employeeStorage.Get(filter, orderBy, page, pageSize);
     }
-    
+
     public void UpdateEmployee(Employee oldEmployee, Employee newEmployee)
     {
         if (oldEmployee is null)
             throw new ArgumentNullException(nameof(oldEmployee));
         if (newEmployee is null)
             throw new ArgumentNullException(nameof(newEmployee));
-        if (!_employeeStorage.Get(c => Equals(c, oldEmployee)).Any())
+        var byId = _employeeStorage.GetById(oldEmployee.Id);
+        if (byId is null)
             throw new ArgumentException("Employee not found");
-        _employeeStorage.Update(oldEmployee, newEmployee);
+        _employeeStorage.Update(oldEmployee.Id, newEmployee);
     }
     
     public void RemoveEmployee(Employee employee)
     {
         if (employee is null)
             throw new ArgumentNullException(nameof(employee));
-        _employeeStorage.Delete(employee);
+        _employeeStorage.Delete(employee.Id);
     }
 }

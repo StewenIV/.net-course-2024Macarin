@@ -14,11 +14,10 @@ class Program
             Surname = "Ivanov",
             Email = "aslda@gmail.com",
             PhoneNumber = "123456789",
-            Age = 25,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Tiraspol",
             Position = "Developer",
             Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
             EndDate = DateTime.Now.AddYears(1)
         };
         var employeeSasha = new Employee
@@ -27,11 +26,10 @@ class Program
             Surname = "Macarin",
             Email = "copyemail@mgamil.com",
             PhoneNumber = "123456789",
-            Age = 20,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Bender",
             Position = "Developer",
             Salary = 1000m,
-            Currency = new Currency { Name = "Dollar", Code = CurrencyCode.Usd },
             EndDate = DateTime.Now.AddYears(1)
         };
         Console.WriteLine("До изменения: " + employeeSasha.Contract);
@@ -56,7 +54,7 @@ class Program
             Surname = "Ivanov",
             Email = "akjsd@gmail.com",
             PhoneNumber = "123456789",
-            Age = 25,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Tiraspol",
             OrderNumber = 1,
             OrderAmount = 1000m
@@ -66,11 +64,11 @@ class Program
         var employeeAnonymous = BankService.Hiring(clientIvan);
         Console.WriteLine($"Employee: {employeeAnonymous.Contract}");
 
-        var clientsList = TestDataGenerator.GenerateClients();
+        var clientsList = TestDataGenerator.GenerateClients(1000);
         var singleClient = clientsList[500];
         var clientsDictionary = TestDataGenerator.GenerateClientsDictionary(clientsList);
         var clientKey = clientsDictionary.Keys.ElementAt(500);
-        var employeesList = TestDataGenerator.GenerateEmployees();
+        var employeesList = TestDataGenerator.GenerateEmployees(1000);
 
         var iteration = 10;
         var warmupIterations = 3;
@@ -153,7 +151,7 @@ class Program
         employee.EndDate = employee.EndDate.AddYears(1);
         string contract =
             $"Contract for {employee.Name} {employee.Surname} from {employee.StartDate.ToString("d")} to {employee.EndDate.ToString("d")}" +
-            $" with salary: with salary: {employee.Salary} {employee.Currency.Code}) has been updated.";
+            $" with salary: with salary: {employee.Salary}) has been updated.";
         employee.Contract = contract; //достаточно присвоить новое значение свойству, так как это ссылочный тип данных
     }
 

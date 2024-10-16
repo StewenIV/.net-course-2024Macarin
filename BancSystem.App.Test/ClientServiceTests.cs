@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using BankSystem.App.Services;
 using BankSystem.Appl.Exceptions;
 using BankSystem.Appl.Interfaces;
+using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
 
@@ -13,8 +14,10 @@ public class ClientServiceTests
     public void AddClient_WhenClientIsValid_ShouldAddClient()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = new Client
         {
@@ -22,7 +25,7 @@ public class ClientServiceTests
             Surname = "Surname",
             PhoneNumber = "+7 812 602-03-30",
             Email = "asdlkad@gmail.com",
-            Age = 18,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Address",
             OrderNumber = 1,
             OrderAmount = 1,
@@ -33,24 +36,24 @@ public class ClientServiceTests
         clientService.AddClient(client);
 
         //Assert
-        Assert.Contains(clientService.GetClients(c => c.Name == client.Name).Values, account =>
-            account[0].Currency.Name == "Dollar" && account[0].Currency.Code == CurrencyCode.Usd);
-        Assert.NotEmpty(clientService.GetClients(c => c.Name == client.Name));
+        Assert.NotNull(clientStorage.GetById(client.Id));
     }
 
     [Fact]
     public void AddClient_WhenClientIsNotValid_ShouldThrowValidationException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = new Client
         {
             Surname = "Surname",
             PhoneNumber = "PhoneNumber",
             Email = "Email",
-            Age = 18,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Address",
             OrderNumber = 1,
             OrderAmount = 1
@@ -72,8 +75,10 @@ public class ClientServiceTests
     public void AddClient_WhenClientIsUnder18_ShouldThrowInvalidClientAgeException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = new Client
         {
@@ -81,7 +86,7 @@ public class ClientServiceTests
             Surname = "Surname",
             PhoneNumber = "+7 812 602-03-30",
             Email = "asdlkad@gmail.com",
-            Age = 17,
+            BirthDate = new DateTime(2014, 1, 1),
             Address = "Address",
             OrderNumber = 1,
             OrderAmount = 1,
@@ -104,8 +109,10 @@ public class ClientServiceTests
     public void AddClient_WhenPassportDetailsIsNull_ShouldTrowPassportDetailsNullException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = new Client
         {
@@ -113,7 +120,7 @@ public class ClientServiceTests
             Surname = "Surname",
             PhoneNumber = "+7 812 602-03-30",
             Email = "asdlkad@gmail.com",
-            Age = 18,
+            BirthDate = new DateTime(2006, 1, 1),
             Address = "Address",
             OrderNumber = 1,
             OrderAmount = 1,
@@ -136,8 +143,10 @@ public class ClientServiceTests
     public void AddAdditionalAccount_WhenClientIsNull_ShouldThrowArgumentNullException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         Client client = null;
 
@@ -157,8 +166,10 @@ public class ClientServiceTests
     public void AddAdditionalAccount_WhenAccountsIsNull_ShouldThrowArgumentNullException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = new Client();
 
@@ -178,8 +189,10 @@ public class ClientServiceTests
     public void AddAdditionalAccount_WhenClientNotFound_ShouldThrowArgumentException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = new Client();
 
@@ -199,10 +212,12 @@ public class ClientServiceTests
     public void AddAdditionalAccount_WhenAccountIsNotValid_ShouldThrowValidationException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        context.Clients.AddRangeAsync(TestDataGenerator.GenerateClients(10));
+        context.SaveChanges();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientAccounts.First().Key;
+        var client = context.Clients.First();
         var account = new Account
         {
             Currency = new Currency
@@ -229,8 +244,8 @@ public class ClientServiceTests
     public void UpdateAccount_WhenClientIsNull_ShouldThrowArgumentNullException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         Client client = null;
         var account = new Account();
@@ -251,10 +266,10 @@ public class ClientServiceTests
     public void UpdateAccount_WhenAccountIsNull_ShouldThrowArgumentNullException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientAccounts.First().Key;
+        var client = context.Clients.First();
         Account account = null;
 
         //Act
@@ -273,8 +288,8 @@ public class ClientServiceTests
     public void UpdateAccount_WhenClientNotFound_ShouldThrowArgumentException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = new Client();
         var account = new Account();
@@ -295,8 +310,8 @@ public class ClientServiceTests
     public void UpdateAccount_WhenUpdateAccountIsNotValid_ShouldArgumentException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var updateAccount = new Account
         {
@@ -307,11 +322,12 @@ public class ClientServiceTests
             },
             Amount = -1
         };
+        var client = context.Clients.First()!;
 
         //Act
         try
         {
-            clientService.UpdateAccount(clientAccounts.First().Key, updateAccount);
+            clientService.UpdateAccount(client, updateAccount);
         }
         catch (ArgumentException exception)
         {
@@ -324,8 +340,8 @@ public class ClientServiceTests
     public void UpdateAccount_WhenExistingAccountIsNotValid_ShouldTrowValidationException()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var clientSasha = new Client
         {
@@ -333,7 +349,7 @@ public class ClientServiceTests
             Surname = "Surname",
             PhoneNumber = "+7 812 602-03-30",
             Email = "asdlkad@gmail.com",
-            Age = 18,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Address",
             OrderNumber = 1,
             OrderAmount = 1,
@@ -365,8 +381,8 @@ public class ClientServiceTests
     public void UpdateAccount_WhenAccountIsValid_ShouldUpdateAccount()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var clientSasha = new Client
         {
@@ -374,7 +390,7 @@ public class ClientServiceTests
             Surname = "Surname",
             PhoneNumber = "+7 812 602-03-30",
             Email = "asdlkad@gmail.com",
-            Age = 18,
+            BirthDate = new DateTime(1990, 1, 1),
             Address = "Address",
             OrderNumber = 1,
             OrderAmount = 1,
@@ -395,21 +411,20 @@ public class ClientServiceTests
         clientService.UpdateAccount(clientSasha, account);
 
         //Assert
-        Assert.Contains(clientService.GetClients(c => c.Name == clientSasha.Name).Values, acc =>
-            acc[0].Currency.Name == "Dollar" && acc[0].Currency.Code == CurrencyCode.Usd && acc[0].Amount == 1000m);
+        Assert.Contains(account, clientStorage.GetById(clientSasha.Id).Accounts);
     }
 
     [Fact]
     public void GetClients_WhenClientNameIsDefined_ShouldReturnClientAccountsByName()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientAccounts.First().Key;
+        var client = context.Clients.First();
 
         //Act
-        var clients = clientService.GetClients(c => c.Name == client.Name);
+        var clients = clientService.GetClients(c => c.Name == client.Name, c => c.OrderBy(c => c.Name), 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -419,13 +434,13 @@ public class ClientServiceTests
     public void GetClients_WhenClientSurnameIsDefined_ShouldReturnClientAccountsBySurname()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientAccounts.First().Key;
+        var client = context.Clients.First();
 
         //Act
-        var clients = clientService.GetClients(c => c.Surname == client.Surname);
+        var clients = clientService.GetClients(c => c.Surname == client.Surname, c => c.OrderBy(c => c.Surname), 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -435,13 +450,13 @@ public class ClientServiceTests
     public void GetClients_WhenClientPhoneNumberIsDefined_ShouldReturnClientAccountsByPhoneNumber()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientAccounts.First().Key;
+        var client = context.Clients.First();
 
         //Act
-        var clients = clientService.GetClients(c => c.PhoneNumber == client.PhoneNumber);
+        var clients = clientService.GetClients(c => c.PhoneNumber == client.PhoneNumber, c => c.OrderBy(c => c.PassportDetails), 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -451,13 +466,13 @@ public class ClientServiceTests
     public void GetClients_WhenClientPassportDetailsIsDefined_ShouldReturnClientAccountsByPassportDetails()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientAccounts.First().Key;
+        var client = context.Clients.First();
 
         //Act
-        var clients = clientService.GetClients(c => c.PassportDetails == client.PassportDetails);
+        var clients = clientService.GetClients(c => c.PassportDetails == client.PassportDetails, c => c.OrderBy(c => c.PhoneNumber), 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -467,14 +482,14 @@ public class ClientServiceTests
     public void GetClients_WhenClientStartAndEndDatesAreDefined_ShouldReturnClientAccountsByDates()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var start = DateTime.MinValue;
         var end = DateTime.Now;
 
         //Act
-        var clients = clientService.GetClients(c => c.BirthDate >= start && c.BirthDate <= end);
+        var clients = clientService.GetClients(c => c.BirthDate >= start && c.BirthDate <= end, c => c.OrderBy(c => c.BirthDate), 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -484,10 +499,10 @@ public class ClientServiceTests
     public void GetClients_WhenEverythingIsDetermined_ShouldReturnClientAccountsByAllParameters()
     {
         // Arrange
-        var clientAccounts = TestDataGenerator.GenerateDictionary(TestDataGenerator.GenerateClients());
-        var clientStorage = new ClientStorage(clientAccounts);
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientAccounts.First().Key;
+        var client = context.Clients.First();
         var start = DateTime.MinValue;
         var end = DateTime.Now;
 
@@ -496,7 +511,7 @@ public class ClientServiceTests
         var clients = clientService.GetClients(c => c.Name == client.Name && c.Surname == client.Surname &&
                                                     c.PhoneNumber == client.PhoneNumber &&
                                                     c.PassportDetails == client.PassportDetails &&
-                                                    c.BirthDate >= start && c.BirthDate <= end);
+                                                    c.BirthDate >= start && c.BirthDate <= end,c => c.OrderBy(c => c.Id), 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);

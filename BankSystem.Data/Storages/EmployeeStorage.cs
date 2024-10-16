@@ -1,51 +1,93 @@
+using System.Linq.Expressions;
 using BankSystem.Appl.Interfaces;
+using BankSystem.Data.DbContext;
 using BankSystem.Dom.Models;
 
 namespace BankSystem.Data.Storages;
 
 public class EmployeeStorage : IEmployeeStorage
 {
-    private readonly List<Employee> _employees;
+    private readonly BankSystemDbContext _context;
 
-    public EmployeeStorage(List<Employee> employees)
+    public EmployeeStorage(BankSystemDbContext context)
     {
-        _employees = employees;
+        _context = context;
+    }
+
+    public Employee GetById(Guid employeeId)
+    {
+        var employee = _context.Employees
+            .FirstOrDefault(c => c.Id == employeeId);
+        if (employee is null)
+            throw new ArgumentException("Employee not found");
+        return employee;
     }
 
     public void Add(Employee employee)
     {
         if (employee is null)
             throw new ArgumentNullException(nameof(employee));
-        if (_employees.Exists(c => c.Equals(employee)))
+        var employeesExist = _context.Employees.Any(c => c.Email == employee.Email);
+        if (employeesExist)
             throw new ArgumentException("Employee already exists");
-        _employees.Add(employee);
+        _context.Add(employee);
+        _context.SaveChanges();
     }
 
-    public void Update(Employee oldEmployee, Employee newEmployee)
+    public void Update(Guid oldEmployeeId, Employee newEmployee)
     {
-        if (oldEmployee is null)
-            throw new ArgumentNullException(nameof(oldEmployee));
         if (newEmployee is null)
             throw new ArgumentNullException(nameof(newEmployee));
-        if (!_employees.Contains(oldEmployee))
-            throw new ArgumentException("Employee not found");
-        var index = _employees.IndexOf(oldEmployee);
-        _employees[index] = newEmployee;
-    }
-
-    public List<Employee> Get(Func<Employee, bool> filter)
-    {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
-        return _employees.Where(filter).ToList();
-    }
-
-    public void Delete(Employee employee)
-    {
+        var employee = GetById(oldEmployeeId);
         if (employee is null)
-            throw new ArgumentNullException(nameof(employee));
-        if (0 > _employees.IndexOf(employee))
             throw new ArgumentException("Employee not found");
-        _employees.Remove(employee);
+        employee.Name = newEmployee.Name;
+        employee.Surname = newEmployee.Surname;
+        employee.PhoneNumber = newEmployee.PhoneNumber;
+        employee.Email = newEmployee.Email;
+        employee.Address = newEmployee.Address;
+        employee.PassportDetails = newEmployee.PassportDetails;
+        employee.BirthDate = newEmployee.BirthDate;
+        employee.Bonus = newEmployee.Bonus;
+        employee.Position = newEmployee.Position;
+        employee.StartDate = newEmployee.StartDate;
+        employee.EndDate = newEmployee.EndDate;
+        employee.Salary = newEmployee.Salary;
+        _context.SaveChanges();
     }
-}
+
+    public List<Employee> Get(Expression<Func<Employee, bool>> filter,
+        Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy, int page, int pageSize)
+    {
+        IQueryable<Employee> employeesQuery = _context.Employees;
+        if (filter is not null)
+            employeesQuery = employeesQuery.Where(filter);
+
+        employeesQuery = orderBy != null ? orderBy(employeesQuery) : employeesQuery.OrderBy(c => c.Id);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 1 : pageSize;
+
+        var pagedEmployees = employeesQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return pagedEmployees;
+    }
+
+    public void Delete(Guid employeeId)
+    {
+        if (employeeId == Guid.Empty)
+            throw new ArgumentNullException(nameof(employeeId));
+        var employee = GetById(employeeId);
+        if (employee is null)
+            throw new ArgumentException("Employee not found");
+        _context.Employees.Remove(employee);
+        _context.SaveChanges();
+    }
+    
+    public bool IsEmployeeExist(Guid employeeId)
+    {
+        return _context.Employees.Any(c => c.Id == employeeId);
+    }
+ }

@@ -5,10 +5,11 @@ namespace BancSystem.App.Test;
 
 public class EquivalenceTests
 {
-    [Fact] public void GenerateDictionary_ClientWithSameProperties_FoundInDictionary()
+    [Fact]
+    public void GenerateDictionary_ClientWithSameProperties_FoundInDictionary()
     {
         // Arrange
-        var clients = TestDataGenerator.GenerateClients();
+        var clients = TestDataGenerator.GenerateClients(100);
         var clientAccount = TestDataGenerator.GenerateDictionary(clients);
         var firstClient = clients.First();
         var newClient = new Client
@@ -17,7 +18,7 @@ public class EquivalenceTests
             Surname = firstClient.Surname,
             PhoneNumber = firstClient.PhoneNumber,
             Email = firstClient.Email,
-            Age = firstClient.Age,
+            BirthDate = firstClient.BirthDate,
             Address = firstClient.Address,
             OrderNumber = firstClient.OrderNumber,
             OrderAmount = firstClient.OrderAmount
@@ -34,7 +35,7 @@ public class EquivalenceTests
     public void GenerateDictionary_ClientWithSameProperties_NotFoundInDictionary()
     {
         // Arrange
-        var clients = TestDataGenerator.GenerateClients();
+        var clients = TestDataGenerator.GenerateClients(100);
         var clientAccount = TestDataGenerator.GenerateDictionary(clients);
         var firstClient = clients.First();
         var newClient = new Client
@@ -43,7 +44,7 @@ public class EquivalenceTests
             Surname = firstClient.Surname,
             PhoneNumber = firstClient.PhoneNumber,
             Email = firstClient.Email,
-            Age = firstClient.Age,
+            BirthDate = firstClient.BirthDate,
             Address = firstClient.Address,
             OrderNumber = firstClient.OrderNumber,
             OrderAmount = firstClient.OrderAmount
@@ -60,7 +61,7 @@ public class EquivalenceTests
     public void GenerateEmployees_EmployeeWithSameProperties_FoundInList()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
+        var employees = TestDataGenerator.GenerateEmployees(100);
         var firstEmployee = employees.First();
         var newEmployee = new Employee()
         {
@@ -68,13 +69,12 @@ public class EquivalenceTests
             Surname = firstEmployee.Surname,
             PhoneNumber = firstEmployee.PhoneNumber,
             Email = firstEmployee.Email,
-            Age = firstEmployee.Age,
+            BirthDate = firstEmployee.BirthDate,
             Address = firstEmployee.Address,
             Position = firstEmployee.Position,
             StartDate = firstEmployee.StartDate,
             EndDate = firstEmployee.EndDate,
             Salary = firstEmployee.Salary,
-            Currency = firstEmployee.Currency,
             Contract = firstEmployee.Contract
         };
 
@@ -89,7 +89,7 @@ public class EquivalenceTests
     public void GenerateEmployees_EmployeeWithSameProperties_NotFoundInList()
     {
         // Arrange
-        var employees = TestDataGenerator.GenerateEmployees();
+        var employees = TestDataGenerator.GenerateEmployees(100);
         var firstEmployee = employees.First();
         var newEmployee = new Employee()
         {
@@ -97,13 +97,12 @@ public class EquivalenceTests
             Surname = firstEmployee.Surname,
             PhoneNumber = firstEmployee.PhoneNumber,
             Email = firstEmployee.Email,
-            Age = firstEmployee.Age,
+            BirthDate = firstEmployee.BirthDate,
             Address = firstEmployee.Address,
             Position = firstEmployee.Position,
             StartDate = firstEmployee.StartDate,
             EndDate = firstEmployee.EndDate,
             Salary = firstEmployee.Salary,
-            Currency = firstEmployee.Currency,
             Contract = firstEmployee.Contract
         };
 
