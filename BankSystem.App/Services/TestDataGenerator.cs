@@ -38,7 +38,11 @@ public class TestDataGenerator
             })
             .RuleFor(p => p.OrderNumber, f => ++orderNumber)
             .RuleFor(p => p.OrderAmount, f => f.Random.Int(5, 10) * 100m)
-            .RuleFor(p => p.BirthDate, f => f.Date.Past(99, DateTime.UtcNow.AddYears(-1)))
+            .RuleFor(p => p.BirthDate, f =>
+            {
+                var randomYears = f.Random.Int(18, 99);
+                return DateTime.UtcNow.AddYears(-randomYears);
+            })
             .RuleFor(p => p.PassportDetails, f => 
             {
                 var passportDetails = f.Lorem.Sentence(2);
@@ -104,7 +108,11 @@ public class TestDataGenerator
                 return passportDetails.Length > 50 ? passportDetails.Substring(0, 50) : passportDetails;
             })
             .RuleFor(p => p.Bonus, f => f.Random.Decimal(0, 1000))
-            .RuleFor(p => p.BirthDate, f => f.Date.Past(99, DateTime.UtcNow.AddYears(-1)));
+            .RuleFor(p => p.BirthDate, f =>
+            {
+                var randomYears = f.Random.Int(18, 99);
+                return DateTime.UtcNow.AddYears(-randomYears);
+            });
         return personFaker.Generate(count);
     }
 
