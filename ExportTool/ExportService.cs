@@ -44,16 +44,16 @@ public class ExportService()
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is null or empty");
         if (!Directory.Exists(path))
-            throw new DirectoryNotFoundException();
-        if (!File.Exists(Path.Combine(path, name)))
-            throw new FileNotFoundException();
+            Directory.CreateDirectory(path);
+        var filePath = Path.Combine(path, name);
+        if(!File.Exists(filePath))
+            File.Create(filePath).Close();
 
         var regex = new Regex(
-            "(?<OrderNumber>[^,]+),(?<OrderAmount>[^,]+),(?<Id>[^,]+)," +  
+            "(?<OrderNumber>[^,]+),(?<OrderAmount>[^,]+),(?<Id>[^,]+)," +
             "(?<Name>[^,]+),(?<Surname>[^,]+),(?<PhoneNumber>[^,]+)," +
             "(?<Email>[^,]+),(?<Age>[^,]+),(?<Address>\"([^\"]*)\")," +
             "(?<PassportDetails>[^,]+),(?<BirthDate>[^,]+),(?<Bonus>[^,]+)");
-        var filePath = Path.Combine(path, name);
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
@@ -79,10 +79,11 @@ public class ExportService()
                             Email = match.Groups["Email"].Value,
                             Address = match.Groups["Address"].Value.Trim('"'),
                             PassportDetails = match.Groups["PassportDetails"].Value,
-                            BirthDate = DateTime.ParseExact(match.Groups["BirthDate"].Value, "MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture).ToUniversalTime(),
+                            BirthDate = DateTime.ParseExact(match.Groups["BirthDate"].Value, "MM/dd/yyyy HH:mm:ss",
+                                CultureInfo.InvariantCulture).ToUniversalTime(),
                             Bonus = decimal.Parse(match.Groups["Bonus"].Value, CultureInfo.InvariantCulture)
                         };
-                        service.AddClient(record);   
+                        service.AddClient(record);
                     }
                 }
             }

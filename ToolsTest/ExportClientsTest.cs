@@ -16,15 +16,24 @@ public class ExportClientsTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
-        
+
         // Act
         var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
         ExportService.ExportClientsToCsv(path, "clients.csv", clients);
-        
+
         // Assert
-        Assert.True(File.Exists(Path.Combine(path, "clients.csv")));
+        var filePath = Path.Combine(path, "clients.csv");
+        Assert.True(File.Exists(filePath));
+
+        var fileInfo = new FileInfo(filePath);
+        Assert.True(fileInfo.Length > 0);
+
+        var fileContent = File.ReadAllText(filePath);
+        Assert.Contains(
+            "OrderNumber,OrderAmount,Id,Name,Surname,PhoneNumber,Email,Age,Address,PassportDetails,BirthDate,Bonus",
+            fileContent, StringComparison.InvariantCultureIgnoreCase);
     }
-    
+
     [Fact]
     public void ExportClients_ShouldThrowArgumentException_WhenPathOrNameIsNullOrEmpty()
     {
@@ -32,11 +41,11 @@ public class ExportClientsTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
-        
+
         // Act
         var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
-        
+
         // Assert
-        Assert.Throws<ArgumentException>(() => ExportService.ExportClientsToCsv("", "", clients));
+        Assert.Throws<ArgumentException>(() => ExportService.ExportClientsToCsv(string.Empty, string.Empty, clients));
     }
 }
