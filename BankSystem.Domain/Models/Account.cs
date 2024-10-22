@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using Newtonsoft.Json;
+
 
 namespace BankSystem.Dom.Models;
 
@@ -18,5 +20,6 @@ public class Account
     public decimal Amount { get; set; }
 
     public Guid ClientId { get; set; }
+    [JsonIgnore] 
     public Client? Client { get; set; }
 }

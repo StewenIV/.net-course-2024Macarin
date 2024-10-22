@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
-using System.Xml;
-using Microsoft.VisualBasic;
+using System.Text.Json.Serialization;
 
 namespace BankSystem.Dom.Models;
 
@@ -15,7 +13,7 @@ public class Employee : Person
 
     [Required(ErrorMessage = "Salary is required")]
     public decimal Salary { get; set; }
-
+    [JsonIgnore]
     public string Contract
     {
         get
