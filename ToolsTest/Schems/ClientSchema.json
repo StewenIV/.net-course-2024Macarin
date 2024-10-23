@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "OrderNumber": { "type": "integer" },
+    "OrderAmount": { "type": "number" },
+    "Id": { "type": "string", "format": "uuid" },
+    "Name": { "type": "string" },
+    "Surname": { "type": "string" },
+    "PhoneNumber": { "type": "string" },
+    "Email": { "type": "string", "format": "email" },
+    "Age": { "type": "integer", "minimum": 18 },
+    "Address": { "type": "string" },
+    "PassportDetails": { "type": "string" },
+    "BirthDate": { "type": "string", "format": "date-time" },
+    "Bonus": { "type": "number" }
+  },
+  "required": ["OrderNumber", "OrderAmount", "Id", "Name", "Surname", "PhoneNumber", "Email", "Age", "Address", "PassportDetails", "BirthDate", "Bonus"]
+}

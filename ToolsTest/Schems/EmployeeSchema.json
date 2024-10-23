@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "Id": { "type": "string", "format": "uuid" },
+    "Name": { "type": "string", "maxLength": 50 },
+    "Surname": { "type": "string", "maxLength": 50 },
+    "PhoneNumber": { "type": "string" },
+    "Email": { "type": "string", "format": "email" },
+    "Age": { "type": "integer", "minimum": 18, "maximum": 99 },
+    "Address": { "type": "string" },
+    "PassportDetails": { "type": "string" },
+    "BirthDate": { "type": "string", "format": "date-time" },
+    "Bonus": { "type": "number", "nullable": true },
+    "Position": { "type": "string", "maxLength": 50 },
+    "StartDate": { "type": "string", "format": "date-time" },
+    "EndDate": { "type": "string", "format": "date-time" },
+    "Salary": { "type": "number", "minimum": 0 }
+  },
+  "required": ["Id", "Name", "PhoneNumber", "Address", "BirthDate", "Salary"]
+}

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -7,6 +8,8 @@ using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
 using CsvHelper;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace ExportTool;
 
@@ -46,7 +49,7 @@ public class ExportService()
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);
         var filePath = Path.Combine(path, name);
-        if(!File.Exists(filePath))
+        if (!File.Exists(filePath))
             File.Create(filePath).Close();
 
         var regex = new Regex(
@@ -88,5 +91,45 @@ public class ExportService()
                 }
             }
         }
+    }
+
+    public static void ExportEntityToJson<T>(T entity, string path, string? name)
+        where T : class
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path is null or empty");
+        }
+
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
+
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+
+        var filePsth = Path.Combine(path, name ?? $"{typeof(T).Name}.json");
+        var json = JsonConvert.SerializeObject(entity, Formatting.Indented);
+        File.WriteAllText(filePsth, json);
+    }
+    
+    public static T ImportEntityFromJson<T>(string path, string name)
+        where T : class
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Path is null or empty");
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is null or empty");
+        if (!Directory.Exists(path))
+            Directory.CreateDirectory(path);
+        var filePath = Path.Combine(path, name);
+        if (!File.Exists(filePath))
+            File.Create(filePath).Close();
+        
+        var json = File.ReadAllText(filePath);
+        return JsonConvert.DeserializeObject<T>(json);
     }
 }
