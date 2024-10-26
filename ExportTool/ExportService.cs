@@ -93,7 +93,7 @@ public class ExportService()
         }
     }
 
-    public static void ExportEntityToJson<T>(T entity, string path, string? name)
+    public static string ExportEntityToJson<T>(T entity, string path, string? name)
         where T : class
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -111,9 +111,21 @@ public class ExportService()
             Directory.CreateDirectory(path);
         }
 
-        var filePsth = Path.Combine(path, name ?? $"{typeof(T).Name}.json");
-        var json = JsonConvert.SerializeObject(entity, Formatting.Indented);
-        File.WriteAllText(filePsth, json);
+        var filePath = Path.Combine(path, name ?? $"{typeof(T).Name}.json");
+        List<T> existingEntities;
+        if (File.Exists(filePath))
+        {
+            var json = File.ReadAllText(filePath);
+            existingEntities = JsonConvert.DeserializeObject<List<T>>(json) ?? new List<T>();
+        }
+        else
+        {
+            existingEntities = new List<T>();
+        }
+        existingEntities.Add(entity);
+        var jsonOutput = JsonConvert.SerializeObject(existingEntities, Formatting.Indented);
+        File.WriteAllText(filePath, jsonOutput);
+        return jsonOutput;
     }
     
     public static T ImportEntityFromJson<T>(string path, string name)
