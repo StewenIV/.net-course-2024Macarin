@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -112,22 +113,58 @@ public class ExportService()
         }
 
         var filePath = Path.Combine(path, name ?? $"{typeof(T).Name}.json");
-        List<T> existingEntities;
-        if (File.Exists(filePath))
+        var jsonOutput = JsonConvert.SerializeObject(entity, Formatting.Indented);
+        if (File.Exists(filePath) && new FileInfo(filePath).Length > 0 && new FileInfo(filePath).Extension == ".json")
         {
-            var json = File.ReadAllText(filePath);
-            existingEntities = JsonConvert.DeserializeObject<List<T>>(json) ?? new List<T>();
+            AddToFile(filePath, jsonOutput);
         }
         else
         {
-            existingEntities = new List<T>();
+            File.WriteAllText(filePath, jsonOutput);
         }
-        existingEntities.Add(entity);
-        var jsonOutput = JsonConvert.SerializeObject(existingEntities, Formatting.Indented);
-        File.WriteAllText(filePath, jsonOutput);
+
         return jsonOutput;
     }
-    
+
+    private static void AddToFile(string pathToFile, string jsonText)
+    {
+        using (var stream = new FileStream(pathToFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+        {
+            using (var reader = new StreamReader(stream))
+            {
+                using (var writer = new StreamWriter(stream))
+                {
+                    var fileContent = reader.ReadToEnd();
+                    var lastRightBrace = fileContent.LastIndexOf('}');
+                    var topBracket = fileContent.IndexOf('[');
+                    var bottomBracket = fileContent.LastIndexOf(']');
+                    if (lastRightBrace != -1 && topBracket != -1 && bottomBracket != -1)
+                    {
+                        var remainingContent = fileContent.Substring(lastRightBrace + 1);
+                        stream.Seek(lastRightBrace + 1, SeekOrigin.Begin);
+                        stream.Write(Encoding.UTF8.GetBytes(","), 0, 1);
+                        stream.Write(Encoding.UTF8.GetBytes(jsonText));
+                        stream.Write(Encoding.UTF8.GetBytes(remainingContent));
+                    }
+                    else if (topBracket == -1 && bottomBracket == -1)
+                    {
+                        stream.Seek(0, SeekOrigin.Begin);
+                        stream.Write(Encoding.UTF8.GetBytes("["), 0, 1);
+                        stream.Seek(1, SeekOrigin.Begin);
+                        stream.Write(Encoding.UTF8.GetBytes("{"), 0, 1);
+                        var remainingContent = fileContent.Substring(lastRightBrace + 1);
+                        stream.Seek(lastRightBrace, SeekOrigin.Begin);
+                        writer.Write("}");
+                        writer.Write(",");
+                        writer.Write(jsonText);
+                        writer.Write(remainingContent);
+                        writer.Write("]");
+                    }
+                }
+            }
+        }
+    }
+
     public static T ImportEntityFromJson<T>(string path, string name)
         where T : class
     {
@@ -140,8 +177,22 @@ public class ExportService()
         var filePath = Path.Combine(path, name);
         if (!File.Exists(filePath))
             File.Create(filePath).Close();
-        
+
         var json = File.ReadAllText(filePath);
+        var passedType = typeof(T);
+        if (typeof(IEnumerable).IsAssignableFrom(passedType))
+        {
+            if (json.Contains('[') && json.Contains(']'))
+            {
+                return JsonConvert.DeserializeObject<T>(json);
+            }
+
+            var singleObject = JsonConvert.DeserializeObject(json, passedType.GetGenericArguments()[0]);
+            var collection = (IList)Activator.CreateInstance(passedType);
+            collection.Add(singleObject);
+            return (T)collection;
+        }
+
         return JsonConvert.DeserializeObject<T>(json);
     }
 }
