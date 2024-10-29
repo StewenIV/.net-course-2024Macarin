@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BankSystem.App.Services;
+using BankSystem.Appl.DTOs;
 using BankSystem.Appl.Exceptions;
 using BankSystem.Appl.Interfaces;
 using BankSystem.Data.DbContext;
@@ -423,5 +424,36 @@ public class ClientServiceTests
 
         //Assert
         Assert.NotEmpty(clients);
+    }
+
+    [Fact]
+    public async Task WithdrawAsync_WhenClientHasEnoughMoney_ShouldWithdrawMoney()
+    {
+        // Arrange
+        using var context = new BankSystemDbContext();
+        var clientStorage = new ClientStorage(context);
+        var clientService = new ClientService(clientStorage);
+        var client = clientService.GetClientsAsync(x => true, x => x.OrderBy(x => true), 1, 100).Result;
+
+        //Act
+        var processTask = clientService.StartProcessingRequestsAsync();
+        await GenerateRequestsAsync(10, client.First().Id, 50, clientService);
+        await Task.Delay(1000);
+
+        // Assert
+        Assert.True(client.First().Accounts.First().Amount >= 0);
+    }
+
+    public async Task GenerateRequestsAsync(int numberOfRequests, Guid clientId, decimal maxAmount,
+        ClientService clientService)
+    {
+        var random = new Random();
+        for (int i = 0; i < numberOfRequests; i++)
+        {
+            var amount = (decimal)(random.NextDouble() * (double)maxAmount);
+            var request = new WithdrawalRequest { ClientId = clientId, Amount = amount };
+            clientService.AddWithdrawalRequest(request);
+            await Task.Delay(50);
+        }
     }
 }

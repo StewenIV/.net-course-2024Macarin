@@ -7,8 +7,14 @@ public interface IStorage<T>
 {
     List<T> Get(Expression<Func<T, bool>> filter, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
         int page, int pageSize);
+    Task<List<T>> GetAsync(Expression<Func<T, bool>> filter, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+        int page, int pageSize);
     void Add(T item);
+    Task AddAsync(T item);
     void Delete(Guid item);
-    void Update(Guid item, T newItem); 
+    Task DeleteAsync(Guid item);
+    void Update(Guid item, T newItem);
+    Task UpdateAsync(Guid item, T newItem);
     T GetById(Guid id);
+    Task<T> GetByIdAsync(Guid id);
 }
