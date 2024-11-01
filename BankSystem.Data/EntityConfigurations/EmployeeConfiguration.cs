@@ -57,6 +57,9 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.Salary)
             .HasColumnName("salary")
             .IsRequired();
+         builder.Property(c => c.CreationDate)
+            .HasColumnName("creation_date")
+            .IsRequired();
         builder.HasIndex(e => e.Email)
             .IsUnique()
             .HasDatabaseName("email_unique_employee");

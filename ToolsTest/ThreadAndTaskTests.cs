@@ -58,7 +58,6 @@ public class ThreadAndTaskTests
         }
 
         countDowm.Wait();
-        
     }
 
     [Fact]
@@ -67,10 +66,10 @@ public class ThreadAndTaskTests
         var projectPath = Directory.GetParent(Environment.CurrentDirectory)?.Parent?.Parent?.FullName;
         var pathToDirectory = Path.Combine(projectPath!, "Export");
         var regex = new Regex(@"^clients\d+\.json$");
-        foreach(var file in Directory.GetFiles(pathToDirectory, "*.json"))
+        foreach (var file in Directory.GetFiles(pathToDirectory, "*.json"))
         {
             var fileName = Path.GetFileName(file);
-            if(regex.IsMatch(fileName))
+            if (regex.IsMatch(fileName))
             {
                 var clients = ExportService.ImportEntityFromJson<List<Client>>(pathToDirectory, file);
                 Assert.NotNull(clients);
@@ -89,13 +88,13 @@ public class ThreadAndTaskTests
         var amountToAdd = 100m;
         var semaphore = new Semaphore(1, 1);
         var countDowm = new CountdownEvent(threadCount);
-        
+
         //Act
-        for(int i = 0; i < threadCount; i++)
+        for (int i = 0; i < threadCount; i++)
         {
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                for(int j = 0; j < iterations; j++)
+                for (int j = 0; j < iterations; j++)
                 {
                     semaphore.WaitOne();
                     try
@@ -107,16 +106,17 @@ public class ThreadAndTaskTests
                         semaphore.Release();
                     }
                 }
+
                 countDowm.Signal();
             });
         }
 
         countDowm.Wait();
-        
+
         //Assert
         Assert.Equal(expectedBalance, account.Amount);
     }
-    
+
     private void CutFile(string pathToFile)
     {
         using (var stream = new FileStream(pathToFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))

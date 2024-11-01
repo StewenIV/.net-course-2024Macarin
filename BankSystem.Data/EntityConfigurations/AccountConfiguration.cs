@@ -20,5 +20,8 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(e => e.Amount)
             .HasColumnName("amount")
             .IsRequired();
+        builder.Property(c => c.CreationDate)
+            .HasColumnName("creation_date")
+            .IsRequired();
     }
 }

@@ -22,4 +22,6 @@ public class Account
     public Guid ClientId { get; set; }
     [JsonIgnore] 
     public Client? Client { get; set; }
+    
+    public DateTime CreationDate { get; set; } = DateTime.Now.ToUniversalTime();
 }
