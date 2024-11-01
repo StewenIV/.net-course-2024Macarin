@@ -33,12 +33,24 @@ public class RateUpdater : BackgroundService
         var clients = _clientStorage.Get(c => true, c => c.OrderBy(c => true), 1, 100);
         foreach (var client in clients)
         {
+            if (cancellationToken.IsCancellationRequested)
+                return;
             foreach (var account in client.Accounts)
             {
-                account.Amount += account.Amount * _interestRate;
+                if (CheckingTheMonth(account.CreationDate))
+                {
+                    account.Amount += account.Amount * _interestRate;
+                }
             }
 
-            _clientStorage.Update(client.Id, client);
+            await _clientStorage.UpdateAsync(client.Id, client, cancellationToken);
         }
+    }
+    
+    private bool CheckingTheMonth(DateTime creationDate)
+    {
+        var currentDate = DateTime.Now;
+        var daysSinceCreation = (currentDate - creationDate).Days;
+        return daysSinceCreation % 30 == 0;
     }
 }

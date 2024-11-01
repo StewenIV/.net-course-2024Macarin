@@ -6,6 +6,7 @@ namespace BankSystem.Dom.Models;
 public class Person
 {
     public Guid Id { get; set; }
+
     [Required(ErrorMessage = "Name is required")]
     [StringLength(50)]
     public string Name { get; set; }
@@ -31,4 +32,6 @@ public class Person
     public DateTime BirthDate { get; set; }
 
     public decimal? Bonus { get; set; }
+
+    public DateTime CreationDate { get; set; } = DateTime.Now.ToUniversalTime();
 }

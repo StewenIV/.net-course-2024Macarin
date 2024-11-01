@@ -48,7 +48,8 @@ public class TestDataGenerator
                 var passportDetails = f.Lorem.Sentence(2);
                 return passportDetails.Length > 50 ? passportDetails.Substring(0, 50) : passportDetails;
             })
-            .RuleFor(p => p.Bonus, f => f.Random.Decimal(0, 1000));
+            .RuleFor(p => p.Bonus, f => f.Random.Decimal(0, 1000))
+            .RuleFor(p => p.CreationDate, f => f.Date.Past(1, DateTime.UtcNow));
         return personFaker.Generate(count);
     }
 
@@ -112,7 +113,8 @@ public class TestDataGenerator
             {
                 var randomYears = f.Random.Int(18, 99);
                 return DateTime.UtcNow.AddYears(-randomYears);
-            });
+            })
+            .RuleFor(p => p.CreationDate, f => f.Date.Past(1, DateTime.UtcNow));
         return personFaker.Generate(count);
     }
 

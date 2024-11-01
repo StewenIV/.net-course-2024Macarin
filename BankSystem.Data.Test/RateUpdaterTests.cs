@@ -33,7 +33,7 @@ public class RateUpdaterTests
         using var context = new BankSystemDbContext();
         var storage = new ClientStorage(context);
         var rateUpdater = new RateUpdater(storage);
-        var cancellationTokenSource = new CancellationTokenSource();
+        using var cancellationTokenSource = new CancellationTokenSource();
         await cancellationTokenSource.CancelAsync();
         
         // Act

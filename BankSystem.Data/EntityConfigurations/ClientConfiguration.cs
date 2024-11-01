@@ -14,6 +14,9 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
             .WithOne(a => a.Client)
             .HasForeignKey(a => a.ClientId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.ToTable(t => t.HasCheckConstraint("ValidAge",
+            "DATE_PART('year', AGE(birth_date)) > 0 AND DATE_PART('year', AGE(birth_date)) < 100"));
+
 
         builder.HasKey(e => e.Id)
             .HasName("id_client");
@@ -51,6 +54,9 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
             .IsRequired();
         builder.Property(c => c.OrderNumber)
             .HasColumnName("order_number")
+            .IsRequired();
+        builder.Property(c => c.CreationDate)
+            .HasColumnName("creation_date")
             .IsRequired();
         builder.HasIndex(e => e.Email)
             .IsUnique()
