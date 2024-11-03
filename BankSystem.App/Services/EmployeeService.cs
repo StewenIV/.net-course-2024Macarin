@@ -1,43 +1,55 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
+using AutoMapper;
+using BankSystem.Appl.DTOs;
 using BankSystem.Appl.Exceptions;
 using BankSystem.Appl.Interfaces;
 using BankSystem.Dom.Models;
 
 namespace BankSystem.App.Services;
 
-public class EmployeeService
+public class EmployeeService : IEmployeeService
 {
     private readonly IEmployeeStorage _employeeStorage;
+    private readonly IMapper _mapper;
+
+    public EmployeeService(IEmployeeStorage employeeStorage, IMapper mapper)
+    {
+        _employeeStorage = employeeStorage;
+        _mapper = mapper;
+    }
 
     public EmployeeService(IEmployeeStorage employeeStorage)
     {
         _employeeStorage = employeeStorage;
     }
-    
+
     public bool IsEmployeeExist(Guid employeeId)
     {
-        if(employeeId == Guid.Empty)
+        if (employeeId == Guid.Empty)
             throw new ArgumentNullException(nameof(employeeId));
         return _employeeStorage.IsEmployeeExist(employeeId);
     }
-    
-    public Employee GetEmployeeById(Guid employeeId)
+
+    public EmployeeDto GetById(Guid employeeId)
     {
-        if(employeeId == Guid.Empty)
+        if (employeeId == Guid.Empty)
             throw new ArgumentNullException(nameof(employeeId));
-        return _employeeStorage.GetById(employeeId);
+        var employee = _employeeStorage.GetById(employeeId);
+        return _mapper.Map<EmployeeDto>(employee);
     }
 
-    public Task<Employee?> GetEmployeeByIdAsync(Guid employeeId, CancellationToken cancellationToken = default)
+    public async Task<EmployeeDto?> GetByIdAsync(Guid employeeId, CancellationToken cancellationToken = default)
     {
-        if(employeeId == Guid.Empty)
+        if (employeeId == Guid.Empty)
             throw new ArgumentNullException(nameof(employeeId));
-        return _employeeStorage.GetByIdAsync(employeeId, cancellationToken);
+        var employee = await _employeeStorage.GetByIdAsync(employeeId, cancellationToken);
+        return _mapper.Map<EmployeeDto>(employee);
     }
-    
-    public void AddEmployee(Employee employee)
+
+    public void Add(EmployeeDto employeeDto)
     {
+        var employee = _mapper.Map<Employee>(employeeDto);
         var validationResults = new List<ValidationResult>();
         var validationContext = new ValidationContext(employee);
         bool isValid = Validator.TryValidateObject(employee, validationContext, validationResults, true);
@@ -50,13 +62,14 @@ public class EmployeeService
         if (employee.Age < 18)
             throw new InvalidPersonAgeException("Client is under 18");
         if (employee.PassportDetails is null)
-            throw new PassportDetailsNullException(nameof(employee.PassportDetails));
+            throw new PassportDetailsNullException(nameof(employeeDto.PassportDetails));
 
         _employeeStorage.Add(employee);
     }
-    
-    public async Task AddEmployeeAsync(Employee employee, CancellationToken cancellationToken = default)
+
+    public async Task AddAsync(EmployeeDto employeeDto, CancellationToken cancellationToken = default)
     {
+        var employee = _mapper.Map<Employee>(employeeDto);
         var validationResults = new List<ValidationResult>();
         var validationContext = new ValidationContext(employee);
         var isValid = Validator.TryValidateObject(employee, validationContext, validationResults, true);
@@ -74,57 +87,69 @@ public class EmployeeService
         await _employeeStorage.AddAsync(employee, cancellationToken);
     }
 
-    public List<Employee> GetEmployees(Expression<Func<Employee, bool>> filter,
-        Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy, int page, int pageSize)
+    public List<EmployeeDto> Get(EmployeeSearchParametrs searchParametrs, int page, int pageSize)
     {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
-        return _employeeStorage.Get(filter, orderBy, page, pageSize);
-    }
-    
-    public Task<List<Employee>?> GetEmployeesAsync(Expression<Func<Employee, bool>> filter,
-        Func<IQueryable<Employee>, IOrderedQueryable<Employee>> orderBy, int page, int pageSize, CancellationToken cancellationToken)
-    {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
-        return _employeeStorage.GetAsync(filter, orderBy, page, pageSize, cancellationToken);
+        if (searchParametrs is null)
+            throw new ArgumentNullException(nameof(searchParametrs));
+        var filter = searchParametrs.GetFilter();
+        var orderBy = searchParametrs.GetOrderBy();
+        var response = _employeeStorage.Get(filter, orderBy, page, pageSize);
+        var employees = response.Select(_mapper.Map<EmployeeDto>).ToList();
+        return employees;
     }
 
-    public void UpdateEmployee(Employee oldEmployee, Employee newEmployee)
+    public async Task<List<EmployeeDto>?> GetAsync(EmployeeSearchParametrs searchParameters, int page, int pageSize,
+        CancellationToken cancellationToken)
     {
-        if (oldEmployee is null)
-            throw new ArgumentNullException(nameof(oldEmployee));
-        if (newEmployee is null)
-            throw new ArgumentNullException(nameof(newEmployee));
-        var byId = _employeeStorage.GetById(oldEmployee.Id);
+        if (searchParameters is null)
+            throw new ArgumentNullException(nameof(searchParameters));
+        var filter = searchParameters.GetFilter();
+        var orderBy = searchParameters.GetOrderBy();
+        var response = await _employeeStorage.GetAsync(filter, orderBy, page, pageSize, cancellationToken);
+        if (response != null)
+        {
+           return response.Select(c => _mapper.Map<EmployeeDto>(c)).ToList();
+        }
+
+        return null;
+    }
+
+    public void Update(Guid id, EmployeeDto newEmployeeDto)
+    {
+        if (newEmployeeDto is null)
+            throw new ArgumentNullException(nameof(newEmployeeDto));
+        var newEmployee = _mapper.Map<Employee>(newEmployeeDto);
+        var byId = _employeeStorage.GetById(id);
         if (byId is null)
             throw new ArgumentException("Employee not found");
-        _employeeStorage.Update(oldEmployee.Id, newEmployee);
+        _employeeStorage.Update(id, newEmployee);
     }
-    
-    public async Task UpdateEmployeeAsync(Employee oldEmployee, Employee newEmployee, CancellationToken cancellationToken = default)
+
+    public async Task UpdateAsync(Guid id, EmployeeDto newEmployeeDto,
+        CancellationToken cancellationToken = default)
     {
-        if (oldEmployee is null)
-            throw new ArgumentNullException(nameof(oldEmployee));
-        if (newEmployee is null)
-            throw new ArgumentNullException(nameof(newEmployee));
-        var byId = await _employeeStorage.GetByIdAsync(oldEmployee.Id, cancellationToken);
-        if (byId is null)
+        if (newEmployeeDto is null)
+            throw new ArgumentNullException(nameof(newEmployeeDto));
+        var newEmployee = _mapper.Map<Employee>(newEmployeeDto);
+        var employeeById = await _employeeStorage.GetByIdAsync(id, cancellationToken);
+        if (employeeById is null)
             throw new ArgumentException("Employee not found");
-        await _employeeStorage.UpdateAsync(oldEmployee.Id, newEmployee, cancellationToken);
+        await _employeeStorage.UpdateAsync(id, newEmployee, cancellationToken);
     }
-    
-    public void RemoveEmployee(Employee employee)
+
+    public void Remove(Guid id)
     {
+        var employee = _employeeStorage.GetById(id);
         if (employee is null)
             throw new ArgumentNullException(nameof(employee));
         _employeeStorage.Delete(employee.Id);
     }
-    
-    public async Task RemoveEmployeeAsync(Employee employee, CancellationToken cancellationToken = default)
+
+    public async Task RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        var employee = await _employeeStorage.GetByIdAsync(id, cancellationToken);
         if (employee is null)
             throw new ArgumentNullException(nameof(employee));
-        await _employeeStorage.DeleteAsync(employee.Id, cancellationToken);
+        await _employeeStorage.DeleteAsync(id, cancellationToken);
     }
 }

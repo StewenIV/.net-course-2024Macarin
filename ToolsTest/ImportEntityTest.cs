@@ -1,4 +1,5 @@
 using BankSystem.App.Services;
+using BankSystem.Appl.DTOs;
 using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
@@ -19,9 +20,13 @@ public class ImportEntityTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
 
         //Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var clients = service.Get(clientSearchParameters, 1, 10);
         ExportService.ExportEntityToJson(clients, path, "clients.json");
         var importedСlients = ExportService.ImportEntityFromJson<List<Client>>(path, "clients.json");
 
@@ -38,9 +43,13 @@ public class ImportEntityTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
 
         // Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var clients = service.Get(clientSearchParameters, 1, 10);
 
         // Assert
         Assert.Throws<ArgumentException>(() => ExportService.ImportEntityFromJson<Client>(string.Empty, string.Empty));
@@ -57,9 +66,13 @@ public class ImportEntityTest
         var dbContext = new BankSystemDbContext();
         var storage = new EmployeeStorage(dbContext);
         var service = new EmployeeService(storage);
+        var employeeSearchParameters = new EmployeeSearchParametrs
+        {
+            SortBy = OrderByForEmployee.Null
+        };
         
         //Act 
-        var employees = service.GetEmployees(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var employees = service.Get(employeeSearchParameters, 1, 10);
         ExportService.ExportEntityToJson(employees, path, "employee.json");
         var importedEmployees = ExportService.ImportEntityFromJson<List<Employee>>(path, "employee.json");
         

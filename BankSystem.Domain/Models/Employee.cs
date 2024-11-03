@@ -8,7 +8,7 @@ public class Employee : Person
     [MaxLength(50, ErrorMessage = "Position must be less than 50 characters")]
     public string Position { get; set; }
 
-    [DataType(DataType.Date)] public DateTime StartDate { get; set; } = DateTime.Now;
+    [DataType(DataType.Date)] public DateTime StartDate { get; set; } = DateTime.Now.ToUniversalTime();
     [DataType(DataType.Date)] public DateTime EndDate { get; set; }
 
     [Required(ErrorMessage = "Salary is required")]

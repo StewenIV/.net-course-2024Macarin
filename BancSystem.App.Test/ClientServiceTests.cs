@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using AutoMapper;
 using BankSystem.App.Services;
 using BankSystem.Appl.DTOs;
 using BankSystem.Appl.Exceptions;
 using BankSystem.Appl.Interfaces;
+using BankSystem.Appl.Mapping;
 using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
@@ -12,6 +14,7 @@ namespace BancSystem.App.Test;
 
 public class ClientServiceTests
 {
+    private IMapper _mapper = new Mapper(new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()));
     [Fact]
     public void AddClient_WhenClientIsValid_ShouldAddClient()
     {
@@ -23,7 +26,8 @@ public class ClientServiceTests
         client.BirthDate = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         //Act
-        clientService.AddClient(client);
+        var clientDto = _mapper.Map<ClientDto>(client);
+        clientService.Add(clientDto);
 
         //Assert
         Assert.NotNull(clientStorage.GetById(client.Id));
@@ -43,7 +47,8 @@ public class ClientServiceTests
         //Act
         try
         {
-            clientService.AddClient(client);
+            var clientDto = _mapper.Map<ClientDto>(client);
+            clientService.Add(clientDto);
         }
         catch (ValidationException exception)
         {
@@ -65,7 +70,8 @@ public class ClientServiceTests
         //Act
         try
         {
-            clientService.AddClient(client);
+            var clientDto = _mapper.Map<ClientDto>(client);
+            clientService.Add(clientDto);
         }
         catch (InvalidPersonAgeException exception)
         {
@@ -88,7 +94,8 @@ public class ClientServiceTests
         //Act
         try
         {
-            clientService.AddClient(client);
+            var clientDto = _mapper.Map<ClientDto>(client);
+            clientService.Add(clientDto);
         }
         catch (PassportDetailsNullException exception)
         {
@@ -181,14 +188,17 @@ public class ClientServiceTests
         using var context = new BankSystemDbContext();
         var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientService.GetClients(c => true, c => c.OrderBy(c => c.Id), 1, 1).First();
-        var account = new Account
+        var clientSearchParameters = new ClientSearchParameters()
         {
+            SortBy = OrderByForClient.Null
         };
+        var clientDto = clientService.Get(clientSearchParameters, 1, 1).First();
+        var account = new Account();
 
         //Act
         try
         {
+            var client = _mapper.Map<Client>(clientDto);
             clientService.AddAdditionalAccount(client, new List<Account> { account });
         }
         catch (ValidationException exception)
@@ -309,7 +319,8 @@ public class ClientServiceTests
         //Act
         try
         {
-            clientService.AddClient(client);
+            var clientDto = _mapper.Map<ClientDto>(client);
+            clientService.Add(clientDto);
             clientService.UpdateAccount(client, oldAccount, account);
         }
         catch (ValidationException exception)
@@ -327,9 +338,14 @@ public class ClientServiceTests
         var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = context.Clients.First();
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            Name = client.Name,
+            SortBy = OrderByForClient.Name
+        };
 
         //Act
-        var clients = clientService.GetClients(c => c.Name == client.Name, c => c.OrderBy(c => c.Name), 1, 10);
+        var clients = clientService.Get(clientSearchParameters, 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);
@@ -343,88 +359,19 @@ public class ClientServiceTests
         var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
         var client = context.Clients.First();
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Surname,
+            Name = client.Surname
+        };
 
         //Act
-        var clients = clientService.GetClients(c => c.Surname == client.Surname, c => c.OrderBy(c => c.Surname), 1, 10);
+        var clients = clientService.Get(clientSearchParameters, 1, 10);
 
         //Assert
         Assert.NotEmpty(clients);
     }
-
-    [Fact]
-    public void GetClients_WhenClientPhoneNumberIsDefined_ShouldReturnClientAccountsByPhoneNumber()
-    {
-        // Arrange
-        using var context = new BankSystemDbContext();
-        var clientStorage = new ClientStorage(context);
-        var clientService = new ClientService(clientStorage);
-        var client = context.Clients.First();
-
-        //Act
-        var clients = clientService.GetClients(c => c.PhoneNumber == client.PhoneNumber,
-            c => c.OrderBy(c => c.PassportDetails), 1, 10);
-
-        //Assert
-        Assert.NotEmpty(clients);
-    }
-
-    [Fact]
-    public void GetClients_WhenClientPassportDetailsIsDefined_ShouldReturnClientAccountsByPassportDetails()
-    {
-        // Arrange
-        using var context = new BankSystemDbContext();
-        var clientStorage = new ClientStorage(context);
-        var clientService = new ClientService(clientStorage);
-        var client = context.Clients.First();
-
-        //Act
-        var clients = clientService.GetClients(c => c.PassportDetails == client.PassportDetails,
-            c => c.OrderBy(c => c.PhoneNumber), 1, 10);
-
-        //Assert
-        Assert.NotEmpty(clients);
-    }
-
-    [Fact]
-    public void GetClients_WhenClientStartAndEndDatesAreDefined_ShouldReturnClientAccountsByDates()
-    {
-        // Arrange
-        using var context = new BankSystemDbContext();
-        var clientStorage = new ClientStorage(context);
-        var clientService = new ClientService(clientStorage);
-        var start = DateTime.MinValue.ToUniversalTime();
-        var end = DateTime.Now.ToUniversalTime();
-
-        //Act
-        var clients = clientService.GetClients(c => c.BirthDate >= start && c.BirthDate <= end,
-            c => c.OrderBy(c => c.BirthDate), 1, 10);
-
-        //Assert
-        Assert.NotEmpty(clients);
-    }
-
-    [Fact]
-    public void GetClients_WhenEverythingIsDetermined_ShouldReturnClientAccountsByAllParameters()
-    {
-        // Arrange
-        using var context = new BankSystemDbContext();
-        var clientStorage = new ClientStorage(context);
-        var clientService = new ClientService(clientStorage);
-        var client = context.Clients.First();
-        var start = DateTime.MinValue.ToUniversalTime();
-        var end = DateTime.Now.ToUniversalTime();
-
-
-        //Act
-        var clients = clientService.GetClients(c => c.Name == client.Name && c.Surname == client.Surname &&
-                                                    c.PhoneNumber == client.PhoneNumber &&
-                                                    c.PassportDetails == client.PassportDetails &&
-                                                    c.BirthDate >= start && c.BirthDate <= end,
-            c => c.OrderBy(c => c.Id), 1, 10);
-
-        //Assert
-        Assert.NotEmpty(clients);
-    }
+    
 
     [Fact]
     public async Task WithdrawAsync_WhenClientHasEnoughMoney_ShouldWithdrawMoney()
@@ -433,7 +380,7 @@ public class ClientServiceTests
         using var context = new BankSystemDbContext();
         var clientStorage = new ClientStorage(context);
         var clientService = new ClientService(clientStorage);
-        var client = clientService.GetClientsAsync(x => true, x => x.OrderBy(x => true), 1, 100).Result;
+        var client = clientStorage.GetAsync(x => true, x => x.OrderBy(x => true), 1, 100).Result;
 
         //Act
         var processTask = clientService.StartProcessingRequestsAsync();

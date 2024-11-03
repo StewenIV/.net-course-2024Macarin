@@ -8,7 +8,7 @@ public class Client : Person
     public int OrderNumber { get; set; }
     public decimal OrderAmount { get; set; }
     public List<Account> Accounts { get; set; }
-
+    
     public override bool Equals(object obj)
     {
         if (obj is Client otherClient)

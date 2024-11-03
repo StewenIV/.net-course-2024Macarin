@@ -1,4 +1,5 @@
 using BankSystem.App.Services;
+using BankSystem.Appl.DTOs;
 using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using ExportTool;
@@ -24,7 +25,7 @@ public class InportClientsTest
         ExportService.ImportClientsFromCsv(path, fileName);
 
         // Assert
-        clients.Select(x => service.GetClientById(x.Id)).ToList().ForEach(x => Assert.NotNull(x));
+        clients.Select(x => service.GetById(x.Id)).ToList().ForEach(x => Assert.NotNull(x));
     }
     
     [Fact]
@@ -36,9 +37,13 @@ public class InportClientsTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
         
         // Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var clients = service.Get(clientSearchParameters, 1, 10);
         
         // Assert
         Assert.Throws<ArgumentException>(() => ExportService.ImportClientsFromCsv(string.Empty, string.Empty));

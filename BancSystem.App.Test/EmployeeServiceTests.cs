@@ -1,6 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using AutoMapper;
 using BankSystem.App.Services;
+using BankSystem.Appl.DTOs;
 using BankSystem.Appl.Exceptions;
+using BankSystem.Appl.Mapping;
 using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
@@ -9,6 +12,7 @@ namespace BancSystem.App.Test;
 
 public class EmployeeServiceTests
 {
+    private IMapper _mapper = new Mapper(new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()));
     [Fact]
     public void AddEmployee_WhenEmployeeIsValid_ShouldAddEmployee()
     {
@@ -18,11 +22,13 @@ public class EmployeeServiceTests
         var employeeService = new EmployeeService(storage);
         var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
         employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
+        
         //Act
-        employeeService.AddEmployee(employeeSasha);
+        var employeeDto = _mapper.Map<EmployeeDto>(employeeSasha);
+        employeeService.Add(employeeDto);
 
         //Assert
-        Assert.NotNull(employeeService.GetEmployeeById(employeeSasha.Id));
+        Assert.NotNull(employeeService.GetById(employeeSasha.Id));
     }
 
     [Fact]
@@ -38,7 +44,8 @@ public class EmployeeServiceTests
         //Act
         try
         {
-            employeeService.AddEmployee(employeeSasha);
+            var employeeDto = _mapper.Map<EmployeeDto>(employeeSasha);
+            employeeService.Add(employeeDto);
         }
         catch (InvalidPersonAgeException exception)
         {
@@ -60,7 +67,8 @@ public class EmployeeServiceTests
         //Act
         try
         {
-            employeeService.AddEmployee(employeeSasha);
+            var employeeDto = _mapper.Map<EmployeeDto>(employeeSasha);
+            employeeService.Add(employeeDto);
         }
         catch (PassportDetailsNullException exception)
         {
@@ -86,7 +94,8 @@ public class EmployeeServiceTests
         //Act
         try
         {
-            employeeService.AddEmployee(employeeSasha);
+            var employeeDto = _mapper.Map<EmployeeDto>(employeeSasha);
+            employeeService.Add(employeeDto);
         }
         catch (ValidationException exception)
         {
@@ -103,9 +112,13 @@ public class EmployeeServiceTests
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         var employee = context.Employees.First();
+        var employeeSearchParameters = new EmployeeSearchParametrs
+        {
+            Name = employee.Name
+        };
 
         //Act
-        var employees = employeeService.GetEmployees(c => c.Name == employee.Name, c => c.OrderBy(e => e.Id), 1, 10);
+        var employees = employeeService.Get(employeeSearchParameters, 1, 10);
 
         //Assert
         Assert.NotEmpty(employees);
@@ -119,67 +132,20 @@ public class EmployeeServiceTests
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
         var employee = context.Employees.First();
+        var employeeSearchParameters = new EmployeeSearchParametrs
+        {
+            Name = employee.Surname
+        };
 
         //Act
         var employees =
-            employeeService.GetEmployees(c => c.Surname == employee.Surname, c => c.OrderBy(e => e.Id), 1, 10);
+            employeeService.Get(employeeSearchParameters, 1, 10);
 
 
         //Assert
         Assert.NotEmpty(employees);
     }
-
-    [Fact]
-    public void GetEmployee_WhenEmployeePhoneNumberIsDefined_ShouldReturnEmployeeByPhoneNumber()
-    {
-        // Arrange
-        using var context = new BankSystemDbContext();
-        var storage = new EmployeeStorage(context);
-        var employeeService = new EmployeeService(storage);
-        var employee = context.Employees.First();
-
-        //Act
-        var employees = employeeService.GetEmployees(c => c.PhoneNumber == employee.PhoneNumber,
-            c => c.OrderBy(e => e.Id), 1, 10);
-
-        //Assert
-        Assert.NotEmpty(employees);
-    }
-
-    [Fact]
-    public void GetEmployee_WhenEmployeePassportDetailsIsDefined_ShouldReturnEmployeeByPassportDetails()
-    {
-        // Arrange
-        using var context = new BankSystemDbContext();
-        var storage = new EmployeeStorage(context);
-        var employeeService = new EmployeeService(storage);
-        var employee = context.Employees.First();
-
-        //Act
-        var employees = employeeService.GetEmployees(c => c.PassportDetails == employee.PassportDetails,
-            c => c.OrderBy(e => e.Id), 1, 10);
-        //Assert
-        Assert.NotEmpty(employees);
-    }
-
-    [Fact]
-    public void GetEmployee_WhenEmployeeStartAndEndDatesAreDefined_ShouldReturnEmployeeByStartAndEndDates()
-    {
-        // Arrange
-        using var context = new BankSystemDbContext();
-        var storage = new EmployeeStorage(context);
-        var employeeService = new EmployeeService(storage);
-        var start = DateTime.MinValue.ToUniversalTime();
-        var end = DateTime.Now.ToUniversalTime();
-
-        //Act
-        var employees = employeeService.GetEmployees(c => c.StartDate >= start && c.EndDate <= end,
-            c => c.OrderBy(e => e.Id), 3, 50);
-
-        //Assert
-        Assert.NotEmpty(employees);
-    }
-
+    
     [Fact]
     public void GetEmployee_WhenEverythingIsDefined_ShouldReturnEmployeeByAllParameters()
     {
@@ -190,13 +156,13 @@ public class EmployeeServiceTests
         var employee = context.Employees.First();
         var start = DateTime.MinValue.ToUniversalTime();
         var end = DateTime.Now.ToUniversalTime();
+        var employeeSearchParameters = new EmployeeSearchParametrs
+        {
+            SortBy = OrderByForEmployee.Null
+        };
 
         //Act
-        var employees = employeeService.GetEmployees(c => c.Name == employee.Name && c.Surname == employee.Surname &&
-                                                          c.PhoneNumber == employee.PhoneNumber &&
-                                                          c.PassportDetails == employee.PassportDetails &&
-                                                          c.StartDate >= start && c.EndDate <= end,
-            c => c.OrderBy(e => e.Id), 3, 50);
+        var employees = employeeService.Get(employeeSearchParameters, 3, 50);
 
         //Assert
         Assert.NotEmpty(employees);
@@ -212,12 +178,13 @@ public class EmployeeServiceTests
         var employee = context.Employees.First();
         var employeeSasha = TestDataGenerator.GenerateEmployees(1).First();
         employeeSasha.BirthDate = new DateTime(1990,1,1,0,0,0,DateTimeKind.Utc);
+        var employeeDto = _mapper.Map<EmployeeDto>(employeeSasha);
 
         //Act
-        employeeService.UpdateEmployee(employee, employeeSasha);
+        employeeService.Update(employee.Id, employeeDto);
 
         //Assert
-        Assert.NotNull(employeeService.GetEmployeeById(employee.Id));
+        Assert.NotNull(employeeService.GetById(employee.Id));
     }
 
     [Fact]
@@ -227,13 +194,13 @@ public class EmployeeServiceTests
         using var context = new BankSystemDbContext();
         var storage = new EmployeeStorage(context);
         var employeeService = new EmployeeService(storage);
-        Employee employeeSasha = null;
+        EmployeeDto employeeSasha = null;
         Employee employeeIvan = null;
 
         //Act
         try
         {
-            employeeService.UpdateEmployee(employeeIvan, employeeSasha);
+            employeeService.Update(employeeIvan.Id, employeeSasha);
         }
         catch (ArgumentNullException e)
         {
@@ -268,7 +235,8 @@ public class EmployeeServiceTests
         //Act
         try
         {
-            employeeService.UpdateEmployee(employeeSasha, employeeIvan);
+            var employeeDto = _mapper.Map<EmployeeDto>(employeeSasha);
+            employeeService.Update(employeeSasha.Id, employeeDto);
         }
         catch (ArgumentException e)
         {
@@ -287,8 +255,8 @@ public class EmployeeServiceTests
         var employee = context.Employees.First();
 
         //Act
-        employeeService.RemoveEmployee(employee);
-        var exception = Record.Exception(() => employeeService.GetEmployeeById(employee.Id));
+        employeeService.Remove(employee.Id);
+        var exception = Record.Exception(() => employeeService.GetById(employee.Id));
 
         //Assert
         Assert.True(exception is ArgumentException);
@@ -306,7 +274,7 @@ public class EmployeeServiceTests
         //Act
         try
         {
-            employeeService.RemoveEmployee(employeeIvan);
+            employeeService.Remove(employeeIvan.Id);
         }
         catch (ArgumentNullException e)
         {

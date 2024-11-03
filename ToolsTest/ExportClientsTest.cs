@@ -1,12 +1,18 @@
+using AutoMapper;
 using BankSystem.App.Services;
+using BankSystem.Appl.DTOs;
+using BankSystem.Appl.Mapping;
 using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
+using BankSystem.Dom.Models;
 using ExportTool;
 
 namespace ExportToolTests;
 
 public class ExportClientsTest
 {
+    private readonly IMapper _mapper = new Mapper(new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()));
+
     [Fact]
     public void ExportClients_ShouldExportClients_WhenPathIsValid()
     {
@@ -16,9 +22,14 @@ public class ExportClientsTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
 
         // Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var clientsDto = service.Get(clientSearchParameters, 1, 10);
+        var clients = _mapper.Map<List<Client>>(clientsDto);
         ExportService.ExportClientsToCsv(path, "clients.csv", clients);
 
         // Assert
@@ -41,9 +52,15 @@ public class ExportClientsTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
 
         // Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var clientsDto = service.Get(clientSearchParameters, 1, 10);
+        var clients = _mapper.Map<List<Client>>(clientsDto);
+        
 
         // Assert
         Assert.Throws<ArgumentException>(() => ExportService.ExportClientsToCsv(string.Empty, string.Empty, clients));
