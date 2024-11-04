@@ -155,7 +155,7 @@ public class ClientStorage : IClientStorage
         if (clientId == Guid.Empty)
             throw new ArgumentNullException(nameof(clientId));
         var clientById = GetById(clientId);
-        if (clientById is not null)
+        if (clientById is null)
             throw new ArgumentException("Client not found");
         _context.Clients.Remove(clientById);
         _context.SaveChanges();
@@ -170,7 +170,7 @@ public class ClientStorage : IClientStorage
         if (clientId == Guid.Empty)
             throw new ArgumentNullException(nameof(clientId));
         var clientById = await GetByIdAsync(clientId, cancellationToken);
-        if (clientById is not null)
+        if (clientById is null)
             throw new ArgumentException("Client not found");
         _context.Clients.Remove(clientById);
         await _context.SaveChangesAsync(cancellationToken);

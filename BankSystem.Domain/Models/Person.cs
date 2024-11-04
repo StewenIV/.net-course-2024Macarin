@@ -5,7 +5,7 @@ namespace BankSystem.Dom.Models;
 
 public class Person
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     [Required(ErrorMessage = "Name is required")]
     [StringLength(50)]

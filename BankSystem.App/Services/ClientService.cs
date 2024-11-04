@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Transactions;
+using AutoMapper;
 using BankSystem.Appl.DTOs;
 using BankSystem.Appl.Exceptions;
 using BankSystem.Appl.Interfaces;
@@ -10,30 +11,41 @@ using BankSystem.Dom.Models;
 
 namespace BankSystem.App.Services;
 
-public class ClientService
+public class ClientService : IClientService
 {
     private readonly IClientStorage _clientStorage;
+    private readonly IMapper _mapper;
     private readonly ConcurrentQueue<WithdrawalRequest> _requestQueue = new();
     private readonly int _maxProcessingTasks = 5;
     private CancellationTokenSource _cancellationTokenSource;
+
+    public ClientService(IClientStorage clientStorage, IMapper mapper)
+    {
+        _clientStorage = clientStorage;
+        _mapper = mapper;
+    }
 
     public ClientService(IClientStorage clientStorage)
     {
         _clientStorage = clientStorage;
     }
 
-    public Client GetClientById(Guid clientId)
+    public ClientDto GetById(Guid clientId)
     {
         if (clientId == Guid.Empty)
             throw new ArgumentNullException(nameof(clientId));
-        return _clientStorage.GetById(clientId);
+        var client = _clientStorage.GetById(clientId);
+        var clientDto = _mapper.Map<ClientDto>(client);
+        return clientDto;
     }
 
-    public async Task<Client?> GetClientByIdAsync(Guid clientId, CancellationToken cancellationToken = default)
+    public async Task<ClientDto?> GetByIdAsync(Guid clientId, CancellationToken cancellationToken = default)
     {
         if (clientId == Guid.Empty)
             throw new ArgumentNullException(nameof(clientId));
-        return await _clientStorage.GetByIdAsync(clientId, cancellationToken);
+        var client = await _clientStorage.GetByIdAsync(clientId, cancellationToken);
+        var clientDto = _mapper.Map<ClientDto>(client);
+        return clientDto;
     }
 
     public void AddWithdrawalRequest(WithdrawalRequest request)
@@ -90,8 +102,9 @@ public class ClientService
         }
     }
 
-    public void AddClient(Client client)
+    public void Add(ClientDto clientDto)
     {
+        var client = _mapper.Map<Client>(clientDto);
         var validationResults = new List<ValidationResult>();
         var validationContext = new ValidationContext(client);
         bool isValid = Validator.TryValidateObject(client, validationContext, validationResults, true);
@@ -103,13 +116,12 @@ public class ClientService
 
         if (client.Age < 18)
             throw new InvalidPersonAgeException("Client is under 18");
-        if (client.PassportDetails is null)
-            throw new PassportDetailsNullException(nameof(client.PassportDetails));
         _clientStorage.Add(client);
     }
 
-    public async Task AddClientAsync(Client client, CancellationToken cancellationToken = default)
+    public async Task AddAsync(ClientDto clientDto, CancellationToken cancellationToken = default)
     {
+        var client = _mapper.Map<Client>(clientDto);
         var validationResults = new List<ValidationResult>();
         var validationContext = new ValidationContext(client);
         bool isValid = Validator.TryValidateObject(client, validationContext, validationResults, true);
@@ -126,65 +138,70 @@ public class ClientService
         await _clientStorage.AddAsync(client, cancellationToken);
     }
 
-    public List<Client> GetClients(Expression<Func<Client, bool>> filter,
-        Func<IQueryable<Client>, IOrderedQueryable<Client>> orderBy, int page, int pageSize)
+    public List<ClientDto> Get(ClientSearchParameters searchParameters, int page, int pageSize)
     {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
-        return _clientStorage.Get(filter, orderBy, page, pageSize);
+        if (searchParameters is null)
+            throw new ArgumentNullException(nameof(searchParameters));
+        var filter = searchParameters.GetFilter();
+        var orderBy = searchParameters.GetOrderBy();
+        var response = _clientStorage.Get(filter, orderBy, page, pageSize);
+        var clients = response.Select(c => _mapper.Map<ClientDto>(c)).ToList();
+        return clients;
     }
-
-    public async Task<List<Client>?> GetClientsAsync(Expression<Func<Client, bool>> filter,
-        Func<IQueryable<Client>, IOrderedQueryable<Client>> orderBy, int page, int pageSize,
+    
+    public async Task<List<ClientDto>?> GetAsync(ClientSearchParameters searchParameters, int page, int pageSize,
         CancellationToken cancellationToken = default)
     {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
-        return await _clientStorage.GetAsync(filter, orderBy, page, pageSize, cancellationToken);
+        if (searchParameters is null)
+            throw new ArgumentNullException(nameof(searchParameters));
+        var filter = searchParameters.GetFilter();
+        var orderBy = searchParameters.GetOrderBy();
+        var response = await _clientStorage.GetAsync(filter, orderBy, page, pageSize, cancellationToken);
+        if (response != null)
+        {
+            return response.Select(c => _mapper.Map<ClientDto>(c)).ToList();
+        }
+
+        return null;
     }
 
-    public void UpdateClient(Client oldClient, Client newClient)
+    public void Update(Guid id, ClientDto newClientDto)
     {
-        if (oldClient is null)
-            throw new ArgumentNullException(nameof(oldClient));
-        if (newClient is null)
-            throw new ArgumentNullException(nameof(newClient));
-        var byId = _clientStorage.GetById(oldClient.Id);
-        if (byId is null)
+        if (newClientDto is null)
+            throw new ArgumentNullException(nameof(newClientDto));
+        var newClient = _mapper.Map<Client>(newClientDto);
+        var clientById = _clientStorage.GetById(id);
+        if (clientById is null)
             throw new ArgumentException("Client not found");
-        _clientStorage.Update(oldClient.Id, newClient);
+        _clientStorage.Update(id, newClient);
     }
 
-    public async Task UpdateClientAsync(Client oldClient, Client newClient, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Guid id, ClientDto newClientDto,
+        CancellationToken cancellationToken = default)
     {
-        if (oldClient is null)
-            throw new ArgumentNullException(nameof(oldClient));
-        if (newClient is null)
-            throw new ArgumentNullException(nameof(newClient));
-        var byId = await _clientStorage.GetByIdAsync(oldClient.Id, cancellationToken);
-        if (byId is null)
+        if (newClientDto is null)
+            throw new ArgumentNullException(nameof(newClientDto));
+        var newClient = _mapper.Map<Client>(newClientDto);
+        var clientById = await _clientStorage.GetByIdAsync(id, cancellationToken);
+        if (clientById is null)
             throw new ArgumentException("Client not found");
-        await _clientStorage.UpdateAsync(oldClient.Id, newClient, cancellationToken);
+        await _clientStorage.UpdateAsync(id, newClient, cancellationToken);
     }
 
-    public void RemoveClient(Client client)
+    public void Remove(Guid id)
     {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        var byId = _clientStorage.GetById(client.Id);
-        if (byId is null)
+        var clientById = _clientStorage.GetById(id);
+        if (clientById is null)
             throw new ArgumentException("Client not found");
-        _clientStorage.Delete(client.Id);
+        _clientStorage.Delete(id);
     }
 
-    public async Task RemoveClientAsync(Client client, CancellationToken cancellationToken = default)
+    public async Task RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        var byId = await _clientStorage.GetByIdAsync(client.Id, cancellationToken);
-        if (byId is null)
+        var clientById = await _clientStorage.GetByIdAsync(id, cancellationToken);
+        if (clientById is null)
             throw new ArgumentException("Client not found");
-        await _clientStorage.DeleteAsync(client.Id, cancellationToken);
+        await _clientStorage.DeleteAsync(id, cancellationToken);
     }
 
     public void AddAdditionalAccount(Client client, List<Account> accounts)

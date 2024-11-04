@@ -1,0 +1,61 @@
+using BankSystem.Appl.DTOs;
+using BankSystem.Dom.Models;
+using FluentValidation;
+
+namespace BankSystem.Appl.Validators;
+
+public class EmployeeDtoValidator : AbstractValidator<EmployeeDto>
+{
+    public EmployeeDtoValidator()
+    {
+        RuleFor(c => c.FullName)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("Имя пользователя обязательно.")
+            .MaximumLength(100).WithMessage("Имя пользователя не должно превышать 100 символов.");
+
+        RuleFor(c => c.PhoneNumber)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("Номер телефона обязателен.")
+            .Matches(@"^\+?[1-9]\d{1,14}$").WithMessage("Invalid phone number format.");
+
+        RuleFor(c => c.Email)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("Email обязателен.")
+            .EmailAddress().WithMessage("Неверный формат email.");
+
+        RuleFor(c => c.Address)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("Адрес обязателен.");
+
+        RuleFor(c => c.PassportDetails)
+            .NotEmpty()
+            .NotNull()
+            .WithMessage("Паспортные данные обязательны.");
+
+        RuleFor(c => c.BirthDate)
+            .NotEmpty()
+            .NotNull()
+            .WithMessage("Дата рождения обязательна.")
+            .Must(BeAValidAge).WithMessage("Возраст должен быть от 18 до 99 лет.");
+
+        RuleFor(c => c.Position)
+            .NotNull()
+            .NotEmpty()
+            .WithMessage("Должность обязательна.");
+
+        RuleFor(c => c.Salary)
+            .NotEmpty()
+            .NotNull()
+            .WithMessage("Зарплата обязательна.");
+    }
+
+    private bool BeAValidAge(DateTime birthDate)
+    {
+        int age = DateTime.Now.Year - birthDate.Year;
+        return age >= 18 && age <= 99;
+    }
+}

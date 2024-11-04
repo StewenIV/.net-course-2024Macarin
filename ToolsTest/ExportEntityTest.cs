@@ -1,4 +1,5 @@
 using BankSystem.App.Services;
+using BankSystem.Appl.DTOs;
 using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
@@ -19,9 +20,13 @@ public class ExportEntityTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
 
         //Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var clients = service.Get(clientSearchParameters, 1, 10);
         ExportService.ExportEntityToJson(clients, path, "clients.json");
 
         //Assert
@@ -48,9 +53,13 @@ public class ExportEntityTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
 
         //Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 10);
+        var clients = service.Get(clientSearchParameters, 1, 10);
 
         //Assert
         Assert.Throws<ArgumentException>(() => ExportService.ExportEntityToJson(clients, String.Empty, "clients.json"));
@@ -80,9 +89,13 @@ public class ExportEntityTest
         var dbContext = new BankSystemDbContext();
         var storage = new ClientStorage(dbContext);
         var service = new ClientService(storage);
+        var clientSearchParameters = new ClientSearchParameters()
+        {
+            SortBy = OrderByForClient.Null
+        };
 
         //Act
-        var clients = service.GetClients(x => true, x => x.OrderBy(x => x.Id), 1, 1).First();
+        var clients = service.Get(clientSearchParameters, 1, 1).First();
         ExportService.ExportEntityToJson(clients, path, "clients.json");
 
         //Assert
@@ -108,9 +121,13 @@ public class ExportEntityTest
         var dbContext = new BankSystemDbContext();
         var storage = new EmployeeStorage(dbContext);
         var service = new EmployeeService(storage);
+        var employeeSearchParameters = new EmployeeSearchParametrs()
+        {
+            SortBy = OrderByForEmployee.Null
+        };
 
         //Act
-        var employee = service.GetEmployees(x => true, x => x.OrderBy(x => x.Id), 1, 1).First();
+        var employee = service.Get(employeeSearchParameters, 1, 1).First();
         ExportService.ExportEntityToJson(employee, path, "employee.json");
 
         //Assert

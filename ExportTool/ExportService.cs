@@ -4,7 +4,10 @@ using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using AutoMapper;
 using BankSystem.App.Services;
+using BankSystem.Appl.DTOs;
+using BankSystem.Appl.Mapping;
 using BankSystem.Data.DbContext;
 using BankSystem.Data.Storages;
 using BankSystem.Dom.Models;
@@ -16,6 +19,8 @@ namespace ExportTool;
 
 public class ExportService()
 {
+    private static readonly IMapper Mapper = new Mapper(new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>()));
+
     public static void ExportClientsToCsv(string path, string name, List<Client> clients)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -87,7 +92,8 @@ public class ExportService()
                                 CultureInfo.InvariantCulture).ToUniversalTime(),
                             Bonus = decimal.Parse(match.Groups["Bonus"].Value, CultureInfo.InvariantCulture)
                         };
-                        service.AddClient(record);
+                        var clientDto = Mapper.Map<ClientDto>(record);
+                        service.Add(clientDto);
                     }
                 }
             }

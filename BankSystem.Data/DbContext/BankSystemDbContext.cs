@@ -10,10 +10,20 @@ namespace BankSystem.Data.DbContext;
 
 public class BankSystemDbContext : Microsoft.EntityFrameworkCore.DbContext
 {
+    public BankSystemDbContext(DbContextOptions<BankSystemDbContext> options)
+        : base(options)
+    {
+    }
+
+    public BankSystemDbContext()
+    {
+    }
+
     public DbSet<Client?> Clients => Set<Client>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Employee> Employees => Set<Employee>();
 
+    /*
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var basePath =
@@ -26,9 +36,10 @@ public class BankSystemDbContext : Microsoft.EntityFrameworkCore.DbContext
             .Build();
         optionsBuilder.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         optionsBuilder.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
-        .EnableSensitiveDataLogging()
-        .LogTo(Console.WriteLine, LogLevel.Information);
+            .EnableSensitiveDataLogging()
+            .LogTo(Console.WriteLine, LogLevel.Information);
     }
+    */
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
