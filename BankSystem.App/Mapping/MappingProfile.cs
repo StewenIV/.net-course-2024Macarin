@@ -9,14 +9,32 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<Client, ClientDto>()
-            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Name} {src.Surname}"));
-      
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Name} {src.Surname}"))
+            .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+            .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+            .ForMember(dest => dest.PassportDetails, opt => opt.MapFrom(src => src.PassportDetails))
+            .ForMember(dest => dest.BirthDate, opt => opt.MapFrom(src => src.BirthDate))
+            .ForMember(dest => dest.Bonus, opt => opt.MapFrom(src => src.Bonus))
+            .ForMember(dest => dest.OrderNumber, opt => opt.MapFrom(src => src.OrderNumber))
+            .ForMember(dest => dest.OrderAmount, opt => opt.MapFrom(src => src.OrderAmount))
+            .ReverseMap();
+
         CreateMap<ClientDto, Client>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => GetName(src.FullName, 0)))
             .ForMember(dest => dest.Surname, opt => opt.MapFrom(src => GetName(src.FullName, 1)));
 
         CreateMap<Employee, EmployeeDto>()
-            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Name} {src.Surname}"));
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Name} {src.Surname}"))
+            .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+            .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+            .ForMember(dest => dest.PassportDetails, opt => opt.MapFrom(src => src.PassportDetails))
+            .ForMember(dest => dest.BirthDate, opt => opt.MapFrom(src => src.BirthDate))
+            .ForMember(dest => dest.Bonus, opt => opt.MapFrom(src => src.Bonus))
+            .ForMember(dest => dest.Position, opt => opt.MapFrom(src => src.Position))
+            .ForMember(dest => dest.Salary, opt => opt.MapFrom(src => src.Salary))
+            .ReverseMap();
 
         CreateMap<EmployeeDto, Employee>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => GetName(src.FullName, 0)))
