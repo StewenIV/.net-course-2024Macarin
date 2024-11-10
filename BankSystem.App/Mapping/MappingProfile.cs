@@ -10,7 +10,7 @@ public class MappingProfile : Profile
     {
         CreateMap<Client, ClientDto>()
             .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Name} {src.Surname}"));
-      
+
         CreateMap<ClientDto, Client>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => GetName(src.FullName, 0)))
             .ForMember(dest => dest.Surname, opt => opt.MapFrom(src => GetName(src.FullName, 1)));
